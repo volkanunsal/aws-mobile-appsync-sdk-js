@@ -21,20 +21,13 @@
     "prop-types": "^15.6.0"
   },
   "peerDependencies": {
-    "aws-appsync": "3.x.x",
-    "react": "0.14.x || 15.* || ^15.0.0 || ^16.0.0",
-    "react-apollo": "2.x"
+    "react": "^17.0.0",
+    "@apollo/client": "^3.3.11"
   },
   "devDependencies": {
-    "@react-native-community/netinfo": "^5.0.0",
-    "@types/react": "^16.0.25",
-    "aws-appsync": "^4.0.3",
-    "react": "^16.1.1",
-    "react-apollo": "^2.1.9",
-    "react-native": "^0.50.3",
-    "typescript": "^3.0.1"
-  },
-  "react-native": {
-    "./lib/rehydrated": "./lib/rehydrated-rn"
+    "@types/react": "^17.0.0",
+    "react": "^17.0.0",
+    "@apollo/client": "^3.3.11",
+    "typescript": "^4.2.2"
   }
 }

@@ -30,20 +30,18 @@ const client = new AWSAppSyncClient({
   region: AppSyncConfig.region,
   auth: {
     type: AppSyncConfig.authenticationType,
-    apiKey: AppSyncConfig.apiKey
-  }
+    apiKey: AppSyncConfig.apiKey,
+  },
 });
 
 class Todos extends Component {
   state = {
     editing: {},
-    edits: {}
+    edits: {},
   };
 
   componentDidMount() {
-    this.props.data.subscribeToMore(
-      buildSubscription(NewTodoSubs, ListTodos)
-    );
+    this.props.data.subscribeToMore(buildSubscription(NewTodoSubs, ListTodos));
   }
 
   handleEditClick = (todo, e) => {
@@ -53,7 +51,7 @@ class Todos extends Component {
     edits[todo.id] = { ...todo };
 
     this.setState({ editing, edits });
-  }
+  };
 
   handleCancelClick = (id, e) => {
     const { editing } = this.state;
@@ -61,10 +59,13 @@ class Todos extends Component {
     delete editing[id];
 
     this.setState({ editing });
-  }
+  };
 
   handleSaveClick = (todoId) => {
-    const { edits: { [todoId]: data }, editing } = this.state;
+    const {
+      edits: { [todoId]: data },
+      editing,
+    } = this.state;
 
     const { id, name, description, status } = data;
 
@@ -78,7 +79,7 @@ class Todos extends Component {
     delete editing[todoId];
 
     this.setState({ editing });
-  }
+  };
 
   handleDeleteClick = (todoId, e) => {
     e.preventDefault();
@@ -89,7 +90,7 @@ class Todos extends Component {
     }
 
     this.props.deleteTodo({ id: todoId });
-  }
+  };
 
   onChange(todo, field, event) {
     const { edits } = this.state;
@@ -118,22 +119,44 @@ class Todos extends Component {
     const isEditing = editing[todo.id];
     const currValues = edits[todo.id];
 
-    return (
-      isEditing ?
-        <li key={todo.id}>
-          <input type="text" value={currValues.name || ''} onChange={this.onChange.bind(this, todo, 'name')} placeholder="Name" />
-          <input type="text" value={currValues.description || ''} onChange={this.onChange.bind(this, todo, 'description')} placeholder="Description" />
-          <input type="checkbox" checked={currValues.status === 'done'} onChange={this.onChange.bind(this, todo, 'status')} />
-          <button onClick={this.handleSaveClick.bind(this, todo.id)}>Save</button>
-          <button onClick={this.handleCancelClick.bind(this, todo.id)}>Cancel</button>
-        </li>
-        :
-        <li key={todo.id} onClick={this.handleEditClick.bind(this, todo)}>
-          {todo.id + ' name: ' + todo.name}
-          <input type="checkbox" checked={todo.status === 'done'} disabled={true} />
-          <button onClick={this.handleDeleteClick.bind(this, todo.id)}>Delete</button>
-        </li>);
-  }
+    return isEditing ? (
+      <li key={todo.id}>
+        <input
+          type="text"
+          value={currValues.name || ''}
+          onChange={this.onChange.bind(this, todo, 'name')}
+          placeholder="Name"
+        />
+        <input
+          type="text"
+          value={currValues.description || ''}
+          onChange={this.onChange.bind(this, todo, 'description')}
+          placeholder="Description"
+        />
+        <input
+          type="checkbox"
+          checked={currValues.status === 'done'}
+          onChange={this.onChange.bind(this, todo, 'status')}
+        />
+        <button onClick={this.handleSaveClick.bind(this, todo.id)}>Save</button>
+        <button onClick={this.handleCancelClick.bind(this, todo.id)}>
+          Cancel
+        </button>
+      </li>
+    ) : (
+      <li key={todo.id} onClick={this.handleEditClick.bind(this, todo)}>
+        {todo.id + ' name: ' + todo.name}
+        <input
+          type="checkbox"
+          checked={todo.status === 'done'}
+          disabled={true}
+        />
+        <button onClick={this.handleDeleteClick.bind(this, todo.id)}>
+          Delete
+        </button>
+      </li>
+    );
+  };
 
   render() {
     const { listTodos, refetch } = this.props.data;
@@ -141,7 +164,12 @@ class Todos extends Component {
     return (
       <div>
         <button onClick={() => refetch()}>Refresh</button>
-        <ul>{listTodos && [...listTodos.items].sort((a, b) => a.name.localeCompare(b.name)).map(this.renderTodo)}</ul>
+        <ul>
+          {listTodos &&
+            [...listTodos.items]
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map(this.renderTodo)}
+        </ul>
       </div>
     );
   }
@@ -153,26 +181,30 @@ const AllTodosWithData = compose(
 )(Todos);
 
 class AddTodo extends Component {
-  state = { name: '', description: '' }
+  state = { name: '', description: '' };
 
   onChange(event, type) {
     this.setState({
-      [type]: event.target.value
-    })
+      [type]: event.target.value,
+    });
   }
 
   render() {
     return (
       <div>
-        <input onChange={(event) => this.onChange(event, "name")} />
-        <input onChange={(event) => this.onChange(event, "description")} />
-        <button onClick={() => this.props.createTodo({
-          name: this.state.name,
-          description: this.state.description,
-          status: 'pending'
-        })}>
+        <input onChange={(event) => this.onChange(event, 'name')} />
+        <input onChange={(event) => this.onChange(event, 'description')} />
+        <button
+          onClick={() =>
+            this.props.createTodo({
+              name: this.state.name,
+              description: this.state.description,
+              status: 'pending',
+            })
+          }
+        >
           Add
-      </button>
+        </button>
       </div>
     );
   }
@@ -185,6 +217,6 @@ const WithProvider = () => (
       <App />
     </Rehydrated>
   </ApolloProvider>
-)
+);
 
 export default WithProvider;
