@@ -9,6 +9,9 @@
   "resolutions": {
     "graphql-tag": "2.11.0"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/volkanunsal"
+  },
   "devDependencies": {
     "@types/graphql": "0.12.4",
     "@types/jest": "24",
