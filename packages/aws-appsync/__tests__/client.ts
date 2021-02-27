@@ -42,7 +42,7 @@ beforeEach(() => {
   jest.isolateModules(() => {
     const { AWSAppSyncClient } = require('../src/client');
     ({ createHttpLink } = require('@apollo/client/link/http'));
-    ({ Signer } = require('aws-appsync-auth-link'));
+    ({ Signer } = require('@volkanunsal/aws-appsync-auth-link'));
 
     factory = (opts) => {
       return new AWSAppSyncClient(opts);
