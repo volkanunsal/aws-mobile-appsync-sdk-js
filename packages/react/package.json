@@ -1,5 +1,5 @@
 {
-  "name": "aws-appsync-react",
+  "name": "@volkanunsal/aws-appsync-react",
   "version": "4.0.9",
   "main": "lib/index.js",
   "license": "Apache-2.0",
