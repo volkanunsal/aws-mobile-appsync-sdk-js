@@ -1,6 +1,6 @@
 {
   "name": "@volkanunsal/aws-appsync-auth-link",
-  "version": "3.0.22",
+  "version": "3.0.5",
   "main": "lib/index.js",
   "license": "Apache-2.0",
   "description": "AWS Mobile AppSync Auth Link for JavaScript",
@@ -11,7 +11,7 @@
   "homepage": "https://github.com/awslabs/aws-mobile-appsync-sdk-js.git",
   "repository": {
     "type": "git",
-    "url": "ssh://git@github.com:volkanunsal/aws-mobile-appsync-sdk-js.git",
+    "url": "https://github.com/volkanunsal/aws-mobile-appsync-sdk-js.git",
     "directory": "packages/auth-link"
   },
   "publishConfig": {
