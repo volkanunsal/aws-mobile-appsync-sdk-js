@@ -22,8 +22,8 @@ const Rehydrate = (props: RehydrateProps) => (
 );
 
 export interface RehydratedProps {
-  render?: (props: { rehydrated: boolean }) => React.ReactNode;
-  children?: React.ReactNode;
+  render?: (props: { rehydrated: boolean }) => React.ReactElement;
+  children?: React.ReactElement;
   loading?: React.ComponentType<any>;
 }
 
