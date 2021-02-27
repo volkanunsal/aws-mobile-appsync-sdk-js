@@ -10,7 +10,7 @@ import {
   combineReducers,
   Store,
 } from 'redux';
-import { KEY_PREFIX as REDUX_PERSIST_KEY_PREFIX } from 'redux-persist/constants';
+import { KEY_PREFIX as REDUX_PERSIST_KEY_PREFIX } from 'redux-persist';
 import thunk from 'redux-thunk';
 
 import { AWSAppSyncClient, OfflineCallback } from './client';
