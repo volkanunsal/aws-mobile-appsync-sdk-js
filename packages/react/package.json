@@ -22,6 +22,7 @@
     "test": "jest --coverage --coverageReporters=text --passWithNoTests"
   },
   "dependencies": {
+    "@volkanunsal/aws-appsync": "^4.0.10",
     "prop-types": "^15.6.0"
   },
   "peerDependencies": {

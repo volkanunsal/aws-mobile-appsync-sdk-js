@@ -18,7 +18,7 @@
     "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
-    "prepare": "tsc",
+    "prepare": "rm -rf lib && tsc",
     "test": "jest --coverage --coverageReporters=text",
     "test-watch": "jest --watch"
   },

@@ -2,7 +2,7 @@
  * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-import React, { useEffect, useContext, useState, Context } from 'react';
+import React, { useEffect, useContext, useState, Fragment } from 'react';
 import AWSAppSyncClient from '@volkanunsal/aws-appsync';
 import { getApolloContext, NormalizedCacheObject } from '@apollo/client';
 
@@ -49,6 +49,6 @@ export default function Rehydrated<T extends NormalizedCacheObject>({
   if (render) return render({ rehydrated });
   if (!children) return null;
 
-  if (loading) return rehydrated ? children : loading;
+  if (loading) return rehydrated ? <Fragment>children</Fragment> : loading;
   return <Rehydrate rehydrated={rehydrated}>{children}</Rehydrate>;
 }

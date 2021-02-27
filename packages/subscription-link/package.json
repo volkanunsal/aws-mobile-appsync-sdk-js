@@ -18,7 +18,7 @@
     "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
-    "prepare": "tsc && cp -r src/vendor lib/vendor",
+    "prepare": "rm -rf lib && tsc && cp -r src/vendor lib/vendor",
     "test": "jest --coverage --coverageReporters=text",
     "test-watch": "jest --watch"
   },
