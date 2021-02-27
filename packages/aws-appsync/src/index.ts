@@ -5,6 +5,5 @@
 import AWSAppSyncClient from './client';
 export * from './client';
 export { Signer } from '@volkanunsal/aws-appsync-auth-link';
-export * from './helpers/offline';
 
 export default AWSAppSyncClient;

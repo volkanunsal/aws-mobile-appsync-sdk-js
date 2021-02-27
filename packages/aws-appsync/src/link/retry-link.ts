@@ -4,7 +4,6 @@
  */
 import { ApolloLink } from '@apollo/client';
 import { RetryLink } from '@apollo/client/link/retry';
-import { OfflineAction } from '@redux-offline/redux-offline/lib/types';
 import { graphQLResultHasError } from '@apollo/client/utilities';
 
 export const PERMANENT_ERROR_KEY =
@@ -17,12 +16,6 @@ const getDelay = (count) =>
   2 ** count * BASE_TIME_MS + JITTER_FACTOR * Math.random();
 
 export const SKIP_RETRY_KEY = '@@skipRetry';
-
-export const getEffectDelay = (_action: OfflineAction, retries: number) => {
-  const delay = getDelay(retries);
-
-  return delay <= MAX_DELAY_MS ? delay : null;
-};
 
 export const createRetryLink = (origLink: ApolloLink) => {
   let delay;

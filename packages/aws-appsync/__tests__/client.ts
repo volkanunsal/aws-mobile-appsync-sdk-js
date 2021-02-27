@@ -9,7 +9,6 @@ import {
   ConflictResolver,
 } from '../src/client';
 import { Store } from 'redux';
-// import { OfflineCache } from '../src/cache/offline-cache';
 import { NormalizedCacheObject } from '@apollo/client/cache';
 import { GraphQLError } from 'graphql';
 import { ApolloError } from '@apollo/client';
@@ -18,17 +17,6 @@ import { DEFAULT_KEY_PREFIX } from '../src/store';
 (global as any).fetch = jest.fn();
 
 let setNetworkOnlineStatus: (online: boolean) => void;
-jest.mock(
-  '@redux-offline/redux-offline/lib/defaults/detectNetwork',
-  () => (callback) => {
-    setNetworkOnlineStatus = (online) => {
-      setTimeout(() => callback({ online }), 0);
-    };
-
-    // Setting initial network online status
-    callback({ online: true });
-  }
-);
 jest.mock('@apollo/client/link/http', () => ({
   createHttpLink: jest.fn(),
 }));
@@ -78,11 +66,6 @@ beforeEach(() => {
 const getStoreState = <T extends NormalizedCacheObject>(
   client: AWSAppSyncClient<T>
 ) => ((client as any)._store as Store<any>).getState();
-// Store<OfflineCache>
-
-// const isNetworkOnline = <T extends NormalizedCacheObject>(
-//   client: AWSAppSyncClient<T>
-// ) => getStoreState(client).offline.online;
 
 const getOutbox = <T extends NormalizedCacheObject>(
   client: AWSAppSyncClient<T>
