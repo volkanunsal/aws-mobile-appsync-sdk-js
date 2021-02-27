@@ -11,7 +11,11 @@
   "homepage": "https://github.com/awslabs/aws-mobile-appsync-sdk-js.git",
   "repository": {
     "type": "git",
-    "url": "https://github.com/awslabs/aws-mobile-appsync-sdk-js.git"
+    "url": "https://github.com/volkanunsal/aws-mobile-appsync-sdk-js.git",
+    "directory": "packages/subscription-link"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   },
   "scripts": {
     "prepare": "tsc && cp -r src/vendor lib/vendor",

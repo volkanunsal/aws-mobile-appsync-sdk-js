@@ -50,7 +50,7 @@ import {
   EnqueuedMutationEffect,
   offlineEffectConfig as mutationsConfig,
 } from './link/offline-link';
-import { CONTROL_EVENTS_KEY } from 'aws-appsync-subscription-link';
+import { CONTROL_EVENTS_KEY } from '@volkanunsal/aws-appsync-subscription-link';
 
 const logger = rootLogger.extend('deltasync');
 

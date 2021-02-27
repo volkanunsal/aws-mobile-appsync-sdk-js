@@ -1,9 +1,16 @@
 {
-  "lerna": "2.9.0",
-  "packages": [
-    "packages/*"
-  ],
-  "version": "independent",
+  "packages": ["packages/*"],
   "npmClient": "yarn",
-  "useWorkspaces": true
+  "useWorkspaces": true,
+  "command": {
+    "publish": {
+      "ignoreChanges": ["ignored-file", "*.md"],
+      "message": "chore(release): publish",
+      "registry": "https://npm.pkg.github.com"
+    },
+    "bootstrap": {
+      "ignore": "component-*",
+      "npmClientArgs": ["--no-package-lock"]
+    }
+  }
 }

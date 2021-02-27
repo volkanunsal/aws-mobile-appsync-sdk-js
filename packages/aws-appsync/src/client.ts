@@ -26,8 +26,12 @@ import {
 import { OfflineLink, ComplexObjectLink } from './link';
 import { createStore, StoreOptions, DEFAULT_KEY_PREFIX } from './store';
 import { ApolloCache } from 'apollo-cache';
-import { AuthOptions, AuthLink, AUTH_TYPE } from 'aws-appsync-auth-link';
-import { createSubscriptionHandshakeLink } from 'aws-appsync-subscription-link';
+import {
+  AuthOptions,
+  AuthLink,
+  AUTH_TYPE,
+} from '@volkanunsal/aws-appsync-auth-link';
+import { createSubscriptionHandshakeLink } from '@volkanunsal/aws-appsync-subscription-link';
 import { Credentials, CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { DocumentNode } from 'graphql';
 import { passthroughLink } from './utils';

@@ -10,7 +10,7 @@ import {
   buildMutation,
   CacheOperationTypes,
   CacheUpdatesOptions,
-} from 'aws-appsync';
+} from '@volkanunsal/aws-appsync';
 
 export const graphqlMutation = (
   mutation: DocumentNode,

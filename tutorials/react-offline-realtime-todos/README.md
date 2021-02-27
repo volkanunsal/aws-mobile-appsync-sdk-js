@@ -56,7 +56,7 @@ input UpdateTodoInput {
 
 ## Imports and configuration
 
-This tutorial assumes you have [Create React App](https://github.com/facebook/create-react-app) installed. For simplicity all editing will happen in the `App.js` file but you can modularize your directory and file structure as necessary. 
+This tutorial assumes you have [Create React App](https://github.com/facebook/create-react-app) installed. For simplicity all editing will happen in the `App.js` file but you can modularize your directory and file structure as necessary.
 
 First import the AppSync client SDK dependencies after creating a new React application:
 
@@ -185,7 +185,7 @@ Press the arrow at the top to run your query and then from the running client ap
 
 ## Add offline writes
 
-Of course some applications will want to write from the client application as well and not just add Todos from the console. Writing data when offline with mutations is a little different. The AWS AppSync SDK has an interface that will automatically perform optimistic writes to the cache for immediate UI updates. 
+Of course some applications will want to write from the client application as well and not just add Todos from the console. Writing data when offline with mutations is a little different. The AWS AppSync SDK has an interface that will automatically perform optimistic writes to the cache for immediate UI updates.
 
 The SDK will infer the type of operation by the name of your mutation - for example "createTodo" or "addTodo" are automatically mapped to new items in the cache, however you can provide an operation type override. Additionally the SDK will perform automatic versioning of objects if you choose to use the conflict resolution controls of AWS AppSync. We will show you how this is done later.
 
@@ -333,7 +333,7 @@ mutation addTodo {
 }
 ```
 
-You should see the change automatically show up in your client application. Note that the `id`, `name`, `description`, and `status` are sent in the GraphQL "selection set". In AWS AppSync it is necessary for mutations that trigger subscriptions to specify all of the fields you want subscribers to receive. 
+You should see the change automatically show up in your client application. Note that the `id`, `name`, `description`, and `status` are sent in the GraphQL "selection set". In AWS AppSync it is necessary for mutations that trigger subscriptions to specify all of the fields you want subscribers to receive.
 
 ## Version checks and conflict resolution
 
@@ -587,7 +587,7 @@ mutation($id: ID!) {
   }
 }`
 ```
- 
+
 Import both of these into `App.js`:
 
 ```javascript
@@ -676,7 +676,7 @@ class Todos extends Component {
 
     this.setState({ edits });
   }
- 
+
   renderTodo = (todo) => {
     const { editing, edits } = this.state;
 
@@ -744,7 +744,7 @@ With this layout you might want the following in your UI:
 - When adding a Todo, update the "All Todos" and "Pending Todos" queries with a new item
 - When marking a Todo completed, update the status for that Todo in the "All Todos" list, remove it from the "Pending Todos" list, and add it to the "Done Todos" list.
 
-Of course, for all of these not only do you want the cache management in the client, but the mutations should flow through to eventually converge in your backend. The AppSync client supports this flow no matter if the client is online or offline. 
+Of course, for all of these not only do you want the cache management in the client, but the mutations should flow through to eventually converge in your backend. The AppSync client supports this flow no matter if the client is online or offline.
 
 Create the `./src/GraphQLAllTodosByStatus.js` file with the following content:
 
