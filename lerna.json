@@ -12,5 +12,7 @@
       "ignore": "component-*",
       "npmClientArgs": ["--no-package-lock"]
     }
-  }
+  },
+  "lerna": "2.11.0",
+  "version": "independent"
 }
