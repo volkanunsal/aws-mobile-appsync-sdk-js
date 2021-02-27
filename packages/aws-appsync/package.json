@@ -1,6 +1,6 @@
 {
   "name": "@volkanunsal/aws-appsync",
-  "version": "4.0.19",
+  "version": "4.0.20",
   "main": "lib/index.js",
   "license": "Apache-2.0",
   "description": "AWS Mobile AppSync SDK for JavaScript",
