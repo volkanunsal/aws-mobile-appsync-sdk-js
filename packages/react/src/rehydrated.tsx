@@ -24,7 +24,7 @@ const Rehydrate = (props: RehydrateProps) => (
 export interface RehydratedProps {
   render?: (props: { rehydrated: boolean }) => React.ReactElement;
   children?: React.ReactElement;
-  loading?: React.ComponentType<any>;
+  loading?: React.ReactElement;
 }
 
 export default function Rehydrated<T extends NormalizedCacheObject>({
