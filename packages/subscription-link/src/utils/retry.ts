@@ -1,14 +1,14 @@
-import { rootLogger } from "./index";
-import { DelayFunction } from "../types";
+import { rootLogger } from './index';
+import { DelayFunction } from '../types';
 
-const logger = rootLogger.extend("retry");
+const logger = rootLogger.extend('retry');
 
 const MAX_DELAY_MS = 5000;
 
 /**
- * Internal use of Subscription link 
+ * Internal use of Subscription link
  * @private
- */ 
+ */
 export class NonRetryableError extends Error {
   public readonly nonRetryable = true;
   constructor(message: string) {
@@ -17,14 +17,14 @@ export class NonRetryableError extends Error {
 }
 
 const isNonRetryableError = (obj: any): obj is NonRetryableError => {
-  const key: keyof NonRetryableError = "nonRetryable";
+  const key: keyof NonRetryableError = 'nonRetryable';
   return obj && obj[key];
 };
 
 /**
  * @private
- * Internal use of Subscription link 
- */ 
+ * Internal use of Subscription link
+ */
 export async function retry(
   functionToRetry: Function,
   args: any[],
@@ -37,14 +37,14 @@ export async function retry(
   } catch (err) {
     logger(`error ${err}`);
     if (isNonRetryableError(err)) {
-      logger("non retryable error");
+      logger('non retryable error');
       throw err;
     }
 
     const retryIn = delayFn(attempt, args, err);
-    logger("retryIn ", retryIn);
+    logger('retryIn ', retryIn);
     if (retryIn !== false) {
-      await new Promise(res => setTimeout(res, retryIn));
+      await new Promise((res) => setTimeout(res, retryIn));
       return await retry(functionToRetry, args, delayFn, attempt + 1);
     } else {
       throw err;
@@ -56,7 +56,7 @@ function jitteredBackoff(maxDelayMs: number): DelayFunction {
   const BASE_TIME_MS = 100;
   const JITTER_FACTOR = 100;
 
-  return attempt => {
+  return (attempt) => {
     const delay = 2 ** attempt * BASE_TIME_MS + JITTER_FACTOR * Math.random();
     return delay > maxDelayMs ? false : delay;
   };
@@ -64,8 +64,8 @@ function jitteredBackoff(maxDelayMs: number): DelayFunction {
 
 /**
  * @private
- * Internal use of Subscription link 
- */ 
+ * Internal use of Subscription link
+ */
 export const jitteredExponentialRetry = (
   functionToRetry: Function,
   args: any[],

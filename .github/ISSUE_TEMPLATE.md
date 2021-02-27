@@ -1,7 +1,7 @@
->  Note: If your issue/feature-request/question is regarding the AWS AppSync service, please log it in the 
-  [official AWS AppSync forum](https://forums.aws.amazon.com/forum.jspa?forumID=280&start=0)
+> Note: If your issue/feature-request/question is regarding the AWS AppSync service, please log it in the
+> [official AWS AppSync forum](https://forums.aws.amazon.com/forum.jspa?forumID=280&start=0)
 
-**Do you want to request a *feature* or report a *bug*?**
+**Do you want to request a _feature_ or report a _bug_?**
 
 **What is the current behavior?**
 

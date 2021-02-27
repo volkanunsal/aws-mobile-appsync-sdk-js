@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 export interface RehydratedState {
-    rehydrated: boolean
+  rehydrated: boolean;
 }
 
 export { default as Rehydrated } from './rehydrated';

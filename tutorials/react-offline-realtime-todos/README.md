@@ -1,6 +1,7 @@
 # Overview
 
 This is an example tutorial of building an offline and realtime enabled React application with the AWS AppSync SDK cache abstractions for the Apollo client. The tutorial takes you through a sample GraphQL schema for a "Todo" application in steps:
+
 - Persisting queries offline for reads
 - Mutations offline, with automatic optimistic UI and synchronization
 - Subscribing to data and automatically updating UI
@@ -17,19 +18,19 @@ Navigate to the AWS AppSync console, create a new API selecting **Author from sc
 
 ```graphql
 type Todo {
-	id: ID!
-	name: String
-	description: String
-	status: TodoStatus
+  id: ID!
+  name: String
+  description: String
+  status: TodoStatus
 }
 
 enum TodoStatus {
-	done
-	pending
+  done
+  pending
 }
 
 type Query {
-	get:[Todo]
+  get: [Todo]
 }
 ```
 
@@ -39,16 +40,16 @@ Once the process completes edit the schema input types so that `CreateTodoInput`
 
 ```graphql
 input CreateTodoInput {
-	name: String
-	description: String
-	status: TodoStatus
+  name: String
+  description: String
+  status: TodoStatus
 }
 
 input UpdateTodoInput {
-	id: ID!
-	name: String
-	description: String
-	status: TodoStatus
+  id: ID!
+  name: String
+  description: String
+  status: TodoStatus
 }
 ```
 
@@ -67,7 +68,6 @@ yarn add aws-appsync aws-appsync-react graphql-tag react-apollo
 
 Copy the `aws-exports.js` file that you downloaded from the console into the `./todos/src` directory. Next add the following imports towards the top of the `App.js` file:
 
-
 ```javascript
 import AWSAppSyncClient, { buildSubscription } from 'aws-appsync';
 import { Rehydrated, graphqlMutation } from 'aws-appsync-react';
@@ -75,7 +75,7 @@ import awsmobile from './aws-exports';
 import { ApolloProvider } from 'react-apollo';
 ```
 
-Replace everything __after__ the definition of the `<App />` component with the following configuration:
+Replace everything **after** the definition of the `<App />` component with the following configuration:
 
 ```jsx
 const client = new AWSAppSyncClient({
@@ -83,9 +83,9 @@ const client = new AWSAppSyncClient({
   region: awsmobile.aws_appsync_region,
   auth: {
     type: awsmobile.aws_appsync_authenticationType,
-    apiKey: awsmobile.aws_appsync_apiKey
-  }
-})
+    apiKey: awsmobile.aws_appsync_apiKey,
+  },
+});
 
 const WithProvider = () => (
   <ApolloProvider client={client}>
@@ -93,7 +93,7 @@ const WithProvider = () => (
       <App />
     </Rehydrated>
   </ApolloProvider>
-)
+);
 
 export default WithProvider;
 ```
@@ -104,7 +104,7 @@ Save the file and ensure everything runs in a browser by starting the app from y
 
 ## Add offline reads
 
-The first step is to ensure your Todos can be displayed when offline. Alter the  `<App />` component that simply renders a component called `<AllTodosWithData />` like so:
+The first step is to ensure your Todos can be displayed when offline. Alter the `<App />` component that simply renders a component called `<AllTodosWithData />` like so:
 
 ```jsx
 class App extends Component {
@@ -124,20 +124,20 @@ Next, you will create a `<Todo />` component and wrap it with a HOC that we assi
 import gql from 'graphql-tag';
 
 export default gql`
-query {
-  listTodos {
-    items {
-      id
-      name
-      description
-      status
+  query {
+    listTodos {
+      items {
+        id
+        name
+        description
+        status
+      }
     }
   }
-}`
+`;
 ```
 
 Then import it as well as the `graphql` HOC at the top of your main application file:
-
 
 ```javascript
 import { graphql } from 'react-apollo';
@@ -153,9 +153,14 @@ class Todos extends Component {
     return (
       <div>
         <button onClick={() => refetch()}>Refresh</button>
-        <ul>{listTodos && listTodos.items.map(todo => <li key={todo.id}>{todo.id + ' name: ' + todo.name}</li>)}</ul>
+        <ul>
+          {listTodos &&
+            listTodos.items.map((todo) => (
+              <li key={todo.id}>{todo.id + ' name: ' + todo.name}</li>
+            ))}
+        </ul>
       </div>
-    )
+    );
   }
 }
 const AllTodosWithData = graphql(ListTodos)(Todos);
@@ -168,11 +173,13 @@ At this point you can test by adding Todos into your GraphQL backend from the co
 
 ```graphql
 mutation addTodo {
-  createTodo(input:{
-    name:"My TODO"
-    description:"Testing from the console"
-    status:pending
-  }){
+  createTodo(
+    input: {
+      name: "My TODO"
+      description: "Testing from the console"
+      status: pending
+    }
+  ) {
     id
     name
     description
@@ -199,17 +206,20 @@ Next, you will create a `<AddTodo />` component and wrap it with a HOC that we a
 import gql from 'graphql-tag';
 
 export default gql`
-mutation($name: String $description: String $status:TodoStatus) {
-  createTodo(input : { name:$name description:$description status:$status}){
-    id
-    name
-    description
-    status
+  mutation($name: String, $description: String, $status: TodoStatus) {
+    createTodo(
+      input: { name: $name, description: $description, status: $status }
+    ) {
+      id
+      name
+      description
+      status
+    }
   }
-}`
+`;
 ```
 
-Note the mutation is called `createTodo`,  this will be what your prop is named in the when you add the mutation to the component below that will add Todos on the screen and invoke the operation.
+Note the mutation is called `createTodo`, this will be what your prop is named in the when you add the mutation to the component below that will add Todos on the screen and invoke the operation.
 
 Import the mutation by adding the following into the top of `App.js`:
 
@@ -221,40 +231,45 @@ Now create the `<AddTodo />` component and wrap it with the `graphqlMutation()` 
 
 ```jsx
 class AddTodo extends Component {
-  state = { name: '', description: '' }
+  state = { name: '', description: '' };
 
   onChange(event, type) {
     this.setState({
-      [type]: event.target.value
-    })
+      [type]: event.target.value,
+    });
   }
 
   render() {
     return (
       <div>
-        <input onChange={(event) => this.onChange(event, "name")} />
-        <input onChange={(event) => this.onChange(event, "description")} />
-        <button onClick={() => this.props.createTodo({
-            name: this.state.name,
-            description: this.state.description,
-            status: 'pending'
-          })}>
+        <input onChange={(event) => this.onChange(event, 'name')} />
+        <input onChange={(event) => this.onChange(event, 'description')} />
+        <button
+          onClick={() =>
+            this.props.createTodo({
+              name: this.state.name,
+              description: this.state.description,
+              status: 'pending',
+            })
+          }
+        >
           Add
-      </button>
+        </button>
       </div>
     );
   }
 }
 const AddTodoOffline = graphqlMutation(NewTodo, ListTodos, 'Todo')(AddTodo);
-
 ```
 
 The way `graphqlMutation` works is it takes in 3 required arguments:
+
 - The mutation to run
 - One or more queries to update in the cache
 - The GraphQL response signature of the mutation (`__typename`)
 
 There are also 2 optional arguments:
+
 - The name of the 'id' field, if you are not using id on the type
 - An `operationType` override if you do not want to infer actions such as "add" or "update" from the mutation name
 
@@ -283,14 +298,15 @@ Realtime subscriptions can also have the incoming payload merged into the Apollo
 import gql from 'graphql-tag';
 
 export default gql`
-subscription{
-  onCreateTodo{
-    id
-    name
-    description
-    status
+  subscription {
+    onCreateTodo {
+      id
+      name
+      description
+      status
+    }
   }
-}`
+`;
 ```
 
 Import this into your `App.js` file:
@@ -310,9 +326,10 @@ class Todos extends Component {
     );
   }
   //...More code
-  ```
+```
 
 `buildSubscription` uses the `SubscribeTodos` document defining the subscription to create and `ListTodos` defining what query in the cache to automatically update. It also accepts two additional optional parameters:
+
 - `idField`, used if your GraphQL subscription response type uses something other than "id"
 - `operationType` override if you do not want to infer actions such as "add" or "update" from the subscription name
 
@@ -320,11 +337,9 @@ Run the application again, and invoke a mutation from the AppSync console like s
 
 ```graphql
 mutation addTodo {
-  createTodo(input:{
-    name:"Testing"
-    description:"Console test"
-    status:pending
-  }){
+  createTodo(
+    input: { name: "Testing", description: "Console test", status: pending }
+  ) {
     id
     name
     description
@@ -346,19 +361,19 @@ The SDK will automatically account for this, however you will need to modify the
 
 ```graphql
 type Todo {
-	id: ID!
-	name: String
-	description: String
-	status: TodoStatus
-        version: Int
+  id: ID!
+  name: String
+  description: String
+  status: TodoStatus
+  version: Int
 }
 
 input UpdateTodoInput {
-	id: ID!
-	name: String
-	description: String
-	status: TodoStatus
-        expectedVersion: Int!
+  id: ID!
+  name: String
+  description: String
+  status: TodoStatus
+  expectedVersion: Int!
 }
 ```
 
@@ -485,29 +500,30 @@ It's worth noting that if you have an application where many users or devices ca
 import gql from 'graphql-tag';
 
 export default gql`
-subscription{
-  onCreateTodo{
-    id
-    name
-    description
-    status
-    version
+  subscription {
+    onCreateTodo {
+      id
+      name
+      description
+      status
+      version
+    }
+    onUpdateTodo {
+      id
+      name
+      description
+      status
+      version
+    }
+    onDeleteTodo {
+      id
+      name
+      description
+      status
+      version
+    }
   }
-  onUpdateTodo{
-    id
-    name
-    description
-    status
-    version
-  }
-  onDeleteTodo{
-    id
-    name
-    description
-    status
-    version
-  }
-}`
+`;
 ```
 
 To make updates to items, you can use the AppSync console but the client SDK supports mutations on multiple items offline which are queued. To track this in a React component takes a little orchestration unrelated to AppSync or the SDK, so we have included a ready to use `App.js` file in the sample directory that you can use in this example (called `AppComplete.js`). The mutations for edits and deletes are similar to before.
@@ -518,15 +534,18 @@ Update the `./src/GraphQLNewTodo.js` by adding the `version` field to the select
 import gql from 'graphql-tag';
 
 export default gql`
-mutation($name: String $description: String $status:TodoStatus) {
-  createTodo(input : { name:$name description:$description status:$status}){
-    id
-    name
-    description
-    status
-    version
+  mutation($name: String, $description: String, $status: TodoStatus) {
+    createTodo(
+      input: { name: $name, description: $description, status: $status }
+    ) {
+      id
+      name
+      description
+      status
+      version
+    }
   }
-}`
+`;
 ```
 
 Also update the `./src/GraphQLAllTodos.js` to include the `version` field
@@ -535,17 +554,18 @@ Also update the `./src/GraphQLAllTodos.js` to include the `version` field
 import gql from 'graphql-tag';
 
 export default gql`
-query {
-  listTodos {
-    items {
-      id
-      name
-      description
-      status
-      version
+  query {
+    listTodos {
+      items {
+        id
+        name
+        description
+        status
+        version
+      }
     }
   }
-}`
+`;
 ```
 
 Create the `./src/GraphQLUpdateTodo.js` file with the following content:
@@ -554,21 +574,30 @@ Create the `./src/GraphQLUpdateTodo.js` file with the following content:
 import gql from 'graphql-tag';
 
 export default gql`
-mutation($id: ID! $name: String $description: String $status: TodoStatus $version: Int!) {
-  updateTodo(input:{
-    id: $id
-    name: $name
-    description: $description
-    status: $status
-    expectedVersion: $version
-  }){
-    id
-    name
-    description
-    status
-    version
+  mutation(
+    $id: ID!
+    $name: String
+    $description: String
+    $status: TodoStatus
+    $version: Int!
+  ) {
+    updateTodo(
+      input: {
+        id: $id
+        name: $name
+        description: $description
+        status: $status
+        expectedVersion: $version
+      }
+    ) {
+      id
+      name
+      description
+      status
+      version
+    }
   }
-}`
+`;
 ```
 
 Create the `./src/GraphQLDeleteTodo.js` file with the following content:
@@ -577,15 +606,16 @@ Create the `./src/GraphQLDeleteTodo.js` file with the following content:
 import gql from 'graphql-tag';
 
 export default gql`
-mutation($id: ID!) {
-  deleteTodo(input:{id: $id}){
-    id
-    name
-    description
-    status
-    version
+  mutation($id: ID!) {
+    deleteTodo(input: { id: $id }) {
+      id
+      name
+      description
+      status
+      version
+    }
   }
-}`
+`;
 ```
 
 Import both of these into `App.js`:
@@ -601,13 +631,11 @@ Now replace `<Todos />` component with the following code: (It will add basic st
 class Todos extends Component {
   state = {
     editing: {},
-    edits: {}
+    edits: {},
   };
 
   componentDidMount() {
-    this.props.data.subscribeToMore(
-      buildSubscription(NewTodoSubs, ListTodos)
-    );
+    this.props.data.subscribeToMore(buildSubscription(NewTodoSubs, ListTodos));
   }
 
   handleEditClick = (todo, e) => {
@@ -617,7 +645,7 @@ class Todos extends Component {
     edits[todo.id] = { ...todo };
 
     this.setState({ editing, edits });
-  }
+  };
 
   handleCancelClick = (id, e) => {
     const { editing } = this.state;
@@ -625,12 +653,15 @@ class Todos extends Component {
     delete editing[id];
 
     this.setState({ editing });
-  }
+  };
 
   handleSaveClick = (todoId) => {
-    const { edits: { [todoId]: data }, editing } = this.state;
+    const {
+      edits: { [todoId]: data },
+      editing,
+    } = this.state;
 
-    const { id, name, description, status,  version } = data;
+    const { id, name, description, status, version } = data;
 
     this.props.updateTodo({
       id,
@@ -643,7 +674,7 @@ class Todos extends Component {
     delete editing[todoId];
 
     this.setState({ editing });
-  }
+  };
 
   handleDeleteClick = (todoId, e) => {
     e.preventDefault();
@@ -654,7 +685,7 @@ class Todos extends Component {
     }
 
     this.props.deleteTodo({ id: todoId });
-  }
+  };
 
   onChange(todo, field, event) {
     const { edits } = this.state;
@@ -683,22 +714,44 @@ class Todos extends Component {
     const isEditing = editing[todo.id];
     const currValues = edits[todo.id];
 
-    return (
-      isEditing ?
-        <li key={todo.id}>
-          <input type="text" value={currValues.name || ''} onChange={this.onChange.bind(this, todo, 'name')} placeholder="Name" />
-          <input type="text" value={currValues.description || ''} onChange={this.onChange.bind(this, todo, 'description')} placeholder="Description" />
-          <input type="checkbox" checked={currValues.status === 'done'} onChange={this.onChange.bind(this, todo, 'status')} />
-          <button onClick={this.handleSaveClick.bind(this, todo.id)}>Save</button>
-          <button onClick={this.handleCancelClick.bind(this, todo.id)}>Cancel</button>
-        </li>
-        :
-        <li key={todo.id} onClick={this.handleEditClick.bind(this, todo)}>
-          {todo.id + ' name: ' + todo.name}
-          <input type="checkbox" checked={todo.status === 'done'} onChange={this.onChange.bind(this, todo, 'status')} />
-          <button onClick={this.handleDeleteClick.bind(this, todo.id)}>Delete</button>
-        </li>);
-  }
+    return isEditing ? (
+      <li key={todo.id}>
+        <input
+          type="text"
+          value={currValues.name || ''}
+          onChange={this.onChange.bind(this, todo, 'name')}
+          placeholder="Name"
+        />
+        <input
+          type="text"
+          value={currValues.description || ''}
+          onChange={this.onChange.bind(this, todo, 'description')}
+          placeholder="Description"
+        />
+        <input
+          type="checkbox"
+          checked={currValues.status === 'done'}
+          onChange={this.onChange.bind(this, todo, 'status')}
+        />
+        <button onClick={this.handleSaveClick.bind(this, todo.id)}>Save</button>
+        <button onClick={this.handleCancelClick.bind(this, todo.id)}>
+          Cancel
+        </button>
+      </li>
+    ) : (
+      <li key={todo.id} onClick={this.handleEditClick.bind(this, todo)}>
+        {todo.id + ' name: ' + todo.name}
+        <input
+          type="checkbox"
+          checked={todo.status === 'done'}
+          onChange={this.onChange.bind(this, todo, 'status')}
+        />
+        <button onClick={this.handleDeleteClick.bind(this, todo.id)}>
+          Delete
+        </button>
+      </li>
+    );
+  };
 
   render() {
     const { listTodos, refetch } = this.props.data;
@@ -706,7 +759,12 @@ class Todos extends Component {
     return (
       <div>
         <button onClick={() => refetch()}>Refresh</button>
-        <ul>{listTodos && [...listTodos.items].sort((a, b) => a.name.localeCompare(b.name)).map(this.renderTodo)}</ul>
+        <ul>
+          {listTodos &&
+            [...listTodos.items]
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map(this.renderTodo)}
+        </ul>
       </div>
     );
   }
@@ -721,26 +779,28 @@ import { graphql, compose } from 'react-apollo';
 
 Replace the `<AllTodosWithData />` component with this:
 
- ```javascript
- const AllTodosWithData = compose(
+```javascript
+const AllTodosWithData = compose(
   graphql(ListTodos),
   graphqlMutation(UpdateTodo, ListTodos, 'Todo'),
   graphqlMutation(DeleteTodo, ListTodos, 'Todo')
 )(Todos);
- ```
+```
 
-When you run this version of the app, each item in  `<AllTodosWithData />` can be edited and the appropriate mutation will take place. Even though the mutations are being composed, they are still invoked via a prop passed into your component from the GraphQL mutation name (e.g `this.props.deleteTodo(...)` and  `this.props.updateTodo(...)`).
+When you run this version of the app, each item in `<AllTodosWithData />` can be edited and the appropriate mutation will take place. Even though the mutations are being composed, they are still invoked via a prop passed into your component from the GraphQL mutation name (e.g `this.props.deleteTodo(...)` and `this.props.updateTodo(...)`).
 
 ## Updating multiple queries with a mutation
 
 In a client applications, different parts of your UI correlate to one or more GraphQL queries. As such you may want to update different parts of the UI simultaneously when a single mutation runs.
 
 For example, we have a `status` flag as a GraphQL `enum` in this schema. Your UI might show:
+
 - All Todos in the system
 - Pending Todos yet to be completed
 - Done Todos that have been executed
 
 With this layout you might want the following in your UI:
+
 - When adding a Todo, update the "All Todos" and "Pending Todos" queries with a new item
 - When marking a Todo completed, update the status for that Todo in the "All Todos" list, remove it from the "Pending Todos" list, and add it to the "Done Todos" list.
 
@@ -752,17 +812,18 @@ Create the `./src/GraphQLAllTodosByStatus.js` file with the following content:
 import gql from 'graphql-tag';
 
 export default gql`
-query($status: TodoStatus!) {
-  queryTodosByStatusIndex(status: $status) {
-    items {
-      id
-      name
-      description
-      status
-      version
+  query($status: TodoStatus!) {
+    queryTodosByStatusIndex(status: $status) {
+      items {
+        id
+        name
+        description
+        status
+        version
+      }
     }
   }
-}`
+`;
 ```
 
 Import it into your application:
@@ -776,42 +837,56 @@ This query will allow you to list Todos by `status`. Next modify the `<AllTodosW
 ```javascript
 const AllTodosWithData = compose(
   graphql(ListTodos),
-  graphqlMutation(UpdateTodo,
+  graphqlMutation(
+    UpdateTodo,
     ({ status }) => ({
-      'auto': ListTodos,
+      auto: ListTodos,
 
       // When status is done, add to ListTodosByStatus(status: done), else add to ListTodosByStatus(status: pending)
-      'add': status === 'done' ? { query: ListTodosByStatus, variables: { status: 'done' } } : { query: ListTodosByStatus, variables: { status: 'pending' } },
+      add:
+        status === 'done'
+          ? { query: ListTodosByStatus, variables: { status: 'done' } }
+          : { query: ListTodosByStatus, variables: { status: 'pending' } },
 
       // When status is done, remove from ListTodosByStatus(status: pending), else remove from ListTodosByStatus(status: done)
-      'remove': status === 'done' ? { query: ListTodosByStatus, variables: { status: 'pending' } } : { query: ListTodosByStatus, variables: { status: 'done' } },
+      remove:
+        status === 'done'
+          ? { query: ListTodosByStatus, variables: { status: 'pending' } }
+          : { query: ListTodosByStatus, variables: { status: 'done' } },
     }),
-    'Todo'),
-  graphqlMutation(DeleteTodo, {
-    'auto': [
-      ListTodos,
-      { query: ListTodosByStatus, variables: { status: 'done' } },
-      { query: ListTodosByStatus, variables: { status: 'pending' } }
-    ]
-  }, 'Todo')
+    'Todo'
+  ),
+  graphqlMutation(
+    DeleteTodo,
+    {
+      auto: [
+        ListTodos,
+        { query: ListTodosByStatus, variables: { status: 'done' } },
+        { query: ListTodosByStatus, variables: { status: 'pending' } },
+      ],
+    },
+    'Todo'
+  )
 )(Todos);
 ```
 
 Add to the `App.js` file the following component.
 
 ```jsx
-const TodosByStatus = ({ data: { queryTodosByStatusIndex: { items } = { items: [] } }, status }) => (
+const TodosByStatus = ({
+  data: { queryTodosByStatusIndex: { items } = { items: [] } },
+  status,
+}) => (
   <div>
     <strong>{status}</strong>
-    <pre>
-      {JSON.stringify(items, null, 2)}
-    </pre>
+    <pre>{JSON.stringify(items, null, 2)}</pre>
   </div>
 );
 const TodosByStatusWithData = graphql(ListTodosByStatus)(TodosByStatus);
 ```
 
 Now modify your App component adding two `TodosByStatusWithData` like so:
+
 ```jsx
 class App extends Component {
   render() {
@@ -823,8 +898,12 @@ class App extends Component {
         <table width="100%">
           <tbody>
             <tr>
-              <td width="50%"><TodosByStatusWithData status="done" /></td>
-              <td width="50%"><TodosByStatusWithData status="pending" /></td>
+              <td width="50%">
+                <TodosByStatusWithData status="done" />
+              </td>
+              <td width="50%">
+                <TodosByStatusWithData status="pending" />
+              </td>
             </tr>
           </tbody>
         </table>
@@ -840,9 +919,9 @@ Finally, update your `<AddTodoOffline />` component to properly update the UI wh
 const AddTodoOffline = graphqlMutation(
   NewTodo,
   {
-    'auto': [
+    auto: [
       ListTodos,
-      { query: ListTodosByStatus, variables: { status: 'pending' } }
+      { query: ListTodosByStatus, variables: { status: 'pending' } },
     ],
   },
   'Todo'
