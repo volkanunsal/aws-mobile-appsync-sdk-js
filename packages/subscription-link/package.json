@@ -15,7 +15,7 @@
     "directory": "packages/subscription-link"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/volkanunsal"
+    "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
     "prepare": "tsc && cp -r src/vendor lib/vendor",
