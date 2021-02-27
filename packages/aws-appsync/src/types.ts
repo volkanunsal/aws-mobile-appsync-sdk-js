@@ -3,13 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphQLError } from "graphql";
+import { GraphQLError } from 'graphql';
 
 interface AWSAppsyncGraphQLError extends GraphQLError {
-    errorType: string;
-    data?: object;
+  errorType: string;
+  data?: object;
 }
 
-export {
-    AWSAppsyncGraphQLError
-}
+export { AWSAppsyncGraphQLError };

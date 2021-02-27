@@ -2,10 +2,9 @@
  * Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-import { ApolloError } from 'apollo-client';
-import { Observable } from 'apollo-link';
-import { ApolloLink } from 'apollo-link';
-import { getOperationDefinition } from 'apollo-utilities';
+import { ApolloError } from '@apollo/client';
+import { ApolloLink, RequestHandler } from '@apollo/client/link/core';
+import { Observable, getOperationDefinition } from '@apollo/client/utilities';
 import { GraphQLError } from 'graphql';
 
 import upload from './complex-object-link-uploader';
@@ -14,7 +13,7 @@ import { AWSAppsyncGraphQLError } from '../types';
 export class ComplexObjectLink extends ApolloLink {
   private link: ApolloLink;
 
-  constructor(credentials) {
+  constructor(credentials: RequestHandler) {
     super();
 
     this.link = complexObjectLink(credentials);
@@ -25,7 +24,7 @@ export class ComplexObjectLink extends ApolloLink {
   }
 }
 
-export const complexObjectLink = (credentials) => {
+export const complexObjectLink = (credentials: RequestHandler) => {
   return new ApolloLink((operation, forward) => {
     return new Observable((observer) => {
       let handle;
@@ -42,7 +41,9 @@ export const complexObjectLink = (credentials) => {
 
       if (Object.keys(objectsToUpload).length) {
         const uploadCredentials =
-          typeof credentials === 'function' ? credentials.call() : credentials;
+          typeof credentials === 'function'
+            ? credentials.call(operation)
+            : credentials;
 
         uploadPromise = Promise.resolve(uploadCredentials)
           .then((credentials) => {

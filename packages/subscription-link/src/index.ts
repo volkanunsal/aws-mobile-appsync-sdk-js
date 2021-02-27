@@ -1,16 +1,14 @@
 import {
   SubscriptionHandshakeLink,
-  CONTROL_EVENTS_KEY
-} from "./subscription-handshake-link";
-import { ApolloLink, Observable, createHttpLink } from "@apollo/client";
-import { getMainDefinition } from "apollo-utilities";
-import { NonTerminatingLink } from "./non-terminating-link";
-import { OperationDefinitionNode } from "graphql";
+  CONTROL_EVENTS_KEY,
+} from './subscription-handshake-link';
+import { ApolloLink, Observable, createHttpLink } from '@apollo/client';
+import { getMainDefinition } from '@apollo/client/utilities';
+import { NonTerminatingLink } from './non-terminating-link';
+import { OperationDefinitionNode } from 'graphql';
 
-import {
-  AppSyncRealTimeSubscriptionHandshakeLink
-} from "./realtime-subscription-handshake-link";
-import { UrlInfo } from "./types";
+import { AppSyncRealTimeSubscriptionHandshakeLink } from './realtime-subscription-handshake-link';
+import { UrlInfo } from './types';
 
 function createSubscriptionHandshakeLink(
   args: UrlInfo,
@@ -26,19 +24,22 @@ function createSubscriptionHandshakeLink(
 ) {
   let resultsFetcherLink: ApolloLink, subscriptionLinks: ApolloLink;
 
-  if (typeof infoOrUrl === "string") {
+  if (typeof infoOrUrl === 'string') {
     resultsFetcherLink =
       theResultsFetcherLink || createHttpLink({ uri: infoOrUrl });
     subscriptionLinks = ApolloLink.from([
-      new NonTerminatingLink("controlMessages", {
+      new NonTerminatingLink('controlMessages', {
         link: new ApolloLink(
           (operation, _forward) =>
-            new Observable<any>(observer => {
+            new Observable<any>((observer) => {
               const {
-                variables: { [CONTROL_EVENTS_KEY]: controlEvents, ...variables }
+                variables: {
+                  [CONTROL_EVENTS_KEY]: controlEvents,
+                  ...variables
+                },
               } = operation;
 
-              if (typeof controlEvents !== "undefined") {
+              if (typeof controlEvents !== 'undefined') {
                 operation.variables = variables;
               }
 
@@ -46,10 +47,10 @@ function createSubscriptionHandshakeLink(
 
               return () => {};
             })
-        )
+        ),
       }),
-      new NonTerminatingLink("subsInfo", { link: resultsFetcherLink }),
-      new SubscriptionHandshakeLink("subsInfo")
+      new NonTerminatingLink('subsInfo', { link: resultsFetcherLink }),
+      new SubscriptionHandshakeLink('subsInfo'),
     ]);
   } else {
     const { url } = infoOrUrl;
@@ -58,13 +59,13 @@ function createSubscriptionHandshakeLink(
   }
 
   return ApolloLink.split(
-    operation => {
+    (operation) => {
       const { query } = operation;
       const { kind, operation: graphqlOperation } = getMainDefinition(
         query
       ) as OperationDefinitionNode;
       const isSubscription =
-        kind === "OperationDefinition" && graphqlOperation === "subscription";
+        kind === 'OperationDefinition' && graphqlOperation === 'subscription';
 
       return isSubscription;
     },

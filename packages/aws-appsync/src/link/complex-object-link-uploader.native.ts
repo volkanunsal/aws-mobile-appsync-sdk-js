@@ -5,23 +5,25 @@
 import * as S3 from 'aws-sdk/clients/s3';
 
 export default (fileField, { credentials }) => {
-    const {
-        bucket: Bucket,
-        key: Key,
-        region,
-        mimeType: ContentType,
-        localUri: Body,
-    } = fileField;
+  const {
+    bucket: Bucket,
+    key: Key,
+    region,
+    mimeType: ContentType,
+    localUri: Body,
+  } = fileField;
 
-    const s3 = new S3({
-        credentials,
-        region,
-    });
+  const s3 = new S3({
+    credentials,
+    region,
+  });
 
-    return s3.upload({
-        Bucket,
-        Key,
-        Body,
-        ContentType,
-    }).promise();
+  return s3
+    .upload({
+      Bucket,
+      Key,
+      Body,
+      ContentType,
+    })
+    .promise();
 };

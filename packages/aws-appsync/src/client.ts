@@ -3,29 +3,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import 'setimmediate';
-import ApolloClient, {
+import {
+  ApolloClient,
   ApolloClientOptions,
   MutationOptions,
   OperationVariables,
   MutationUpdaterFn,
-} from 'apollo-client';
+  ApolloCache,
+} from '@apollo/client';
 import {
   InMemoryCache,
   ApolloReducerConfig,
   NormalizedCacheObject,
-} from 'apollo-cache-inmemory';
-import { ApolloLink, Observable, NextLink } from 'apollo-link';
-import { createHttpLink } from 'apollo-link-http';
+} from '@apollo/client/cache';
+import { ApolloLink, NextLink } from '@apollo/client/link/core';
+import { Observable } from '@apollo/client/utilities';
+import { createHttpLink } from '@apollo/client/link/http';
 import { Store } from 'redux';
-
-import { OfflineCache, defaultDataIdFromObject } from './cache/index';
-import {
-  OfflineCache as OfflineCacheType,
-  METADATA_KEY,
-} from './cache/offline-cache';
-import { OfflineLink, ComplexObjectLink } from './link';
+// import { OfflineCache } from './cache';
+// import {
+//   OfflineCache as OfflineCacheType,
+//   METADATA_KEY,
+// } from './cache/offline-cache';
+import { ComplexObjectLink } from './link';
 import { createStore, StoreOptions, DEFAULT_KEY_PREFIX } from './store';
-import { ApolloCache } from 'apollo-cache';
 import {
   AuthOptions,
   AuthLink,
@@ -37,16 +38,19 @@ import { DocumentNode } from 'graphql';
 import { passthroughLink } from './utils';
 import ConflictResolutionLink from './link/conflict-resolution-link';
 import { createRetryLink } from './link/retry-link';
-import {
-  boundEnqueueDeltaSync,
-  buildSync,
-  DELTASYNC_KEY,
-  hashForOptions,
-} from './deltaSync';
-import { Subscription } from 'apollo-client/util/Observable';
+// import {
+//   boundEnqueueDeltaSync,
+//   buildSync,
+//   DELTASYNC_KEY,
+//   hashForOptions,
+// } from './deltaSync';
+import { ObservableSubscription } from '@apollo/client/utilities/observables/Observable';
 import { PERMANENT_ERROR_KEY } from './link/retry-link';
 
+import { defaultDataIdFromObject } from '@apollo/client/cache';
 export { defaultDataIdFromObject };
+
+type OfflineCacheType = any;
 
 class CatchErrorLink extends ApolloLink {
   private link: ApolloLink;
@@ -112,8 +116,8 @@ export const createAppSyncLink = ({
 }) => {
   const link = ApolloLink.from(
     [
-      createLinkWithStore((store) => new OfflineLink(store)),
-      new ConflictResolutionLink(conflictResolver),
+      // createLinkWithStore((store) => new OfflineLink(store)),
+      new ConflictResolutionLink(conflictResolver) as ApolloLink,
       new ComplexObjectLink(complexObjectsCredentials),
       createRetryLink(
         ApolloLink.from([
@@ -125,7 +129,7 @@ export const createAppSyncLink = ({
             )
           ),
         ])
-      ),
+      ) as ApolloLink,
     ].filter(Boolean)
   );
 
@@ -133,9 +137,9 @@ export const createAppSyncLink = ({
 };
 
 export const createLinkWithCache = (
-  createLinkFunc = (cache: ApolloCache<any>) => new ApolloLink(passthroughLink)
+  createLinkFunc = (_cache: ApolloCache<any>) => new ApolloLink(passthroughLink)
 ) => {
-  let theLink;
+  let theLink!: ApolloLink;
 
   return new ApolloLink((op, forward) => {
     if (!theLink) {
@@ -153,7 +157,7 @@ export interface CacheWithStore<T> extends ApolloCache<T> {
 }
 
 const createLinkWithStore = (
-  createLinkFunc = (store: Store<OfflineCacheType>) =>
+  createLinkFunc = (_store: Store<OfflineCacheType>) =>
     new ApolloLink(passthroughLink)
 ) => {
   return createLinkWithCache((cache) => {
@@ -239,7 +243,7 @@ class AWSAppSyncClient<
         storeCacheRootMutation = false,
       } = {},
     }: AWSAppSyncClientOptions,
-    options?: Partial<ApolloClientOptions<TCacheShape>>
+    options?: Partial<ApolloClientOptions<NormalizedCacheObject>>
   ) {
     const { cache: customCache = undefined, link: customLink = undefined } =
       options || {};
@@ -259,9 +263,11 @@ class AWSAppSyncClient<
 
     let resolveClient;
 
-    const dataIdFromObject = disableOffline
-      ? () => null
-      : cacheOptions.dataIdFromObject || defaultDataIdFromObject;
+    const dataIdFromObject = () => null;
+    // const dataIdFromObject = disableOffline
+    //   ? () => null
+    //   : cacheOptions.dataIdFromObject || defaultDataIdFromObject;
+
     const store = disableOffline
       ? null
       : createStore({
@@ -274,9 +280,19 @@ class AWSAppSyncClient<
           keyPrefix,
           callback,
         });
-    const cache: ApolloCache<any> = disableOffline
-      ? customCache || new InMemoryCache(cacheOptions)
-      : new OfflineCache({ store, storeCacheRootMutation }, cacheOptions);
+
+    const inMemoryCache = new InMemoryCache(cacheOptions);
+    // const offlineCache = new OfflineCache(
+    //   { store, storeCacheRootMutation },
+    //   cacheOptions
+    // );
+
+    // const cache: ApolloCache<NormalizedCacheObject> = disableOffline
+    //   ? customCache || inMemoryCache
+    //   : offlineCache;
+
+    const cache: ApolloCache<NormalizedCacheObject> =
+      customCache || inMemoryCache;
 
     const waitForRehydrationLink = new ApolloLink((op, forward) => {
       let handle = null;
@@ -295,18 +311,18 @@ class AWSAppSyncClient<
         };
       });
     });
-    const link = waitForRehydrationLink.concat(
+    const apolloLink =
       customLink ||
-        createAppSyncLink({
-          url,
-          region,
-          auth,
-          complexObjectsCredentials,
-          conflictResolver,
-        })
-    );
+      createAppSyncLink({
+        url,
+        region,
+        auth,
+        complexObjectsCredentials,
+        conflictResolver,
+      });
+    const link = waitForRehydrationLink.concat(apolloLink as ApolloLink);
 
-    const newOptions = {
+    const newOptions: ApolloClientOptions<any> = {
       ...options,
       link,
       cache,
@@ -370,32 +386,32 @@ class AWSAppSyncClient<
 
   sync<T, TVariables = OperationVariables>(
     options: SubscribeWithSyncOptions<T, TVariables>
-  ): Subscription {
+  ): ObservableSubscription {
     if (!this.isOfflineEnabled()) {
       throw new Error('Not supported');
     }
 
     return new Observable<T>((observer) => {
-      let handle: Subscription;
-      const callback = (subscription: Subscription) => {
+      let handle: ObservableSubscription;
+      const callback = (subscription: ObservableSubscription) => {
         handle = subscription;
       };
 
-      (async () => {
-        await this.hydrated();
+      // (async () => {
+      //   await this.hydrated();
 
-        const hash = hashForOptions(options);
-        const itemInHash = this._store.getState()[METADATA_KEY][DELTASYNC_KEY]
-          .metadata[hash];
-        const { baseLastSyncTimestamp = null } = itemInHash || {};
+      //   const hash = hashForOptions(options);
+      //   const itemInHash = this._store.getState()[METADATA_KEY][DELTASYNC_KEY]
+      //     .metadata[hash];
+      //   const { baseLastSyncTimestamp = null } = itemInHash || {};
 
-        boundEnqueueDeltaSync(
-          this._store,
-          { ...options, baseLastSyncTimestamp },
-          observer,
-          callback
-        );
-      })();
+      //   boundEnqueueDeltaSync(
+      //     this._store,
+      //     { ...options, baseLastSyncTimestamp },
+      //     observer,
+      //     callback
+      //   );
+      // })();
 
       return () => {
         if (handle) {
@@ -427,4 +443,5 @@ export type SubscribeWithSyncOptions<T, TVariables = OperationVariables> = {
 
 export default AWSAppSyncClient;
 export { AWSAppSyncClient };
-export { AUTH_TYPE, buildSync };
+// export { AUTH_TYPE, buildSync };
+export { AUTH_TYPE };

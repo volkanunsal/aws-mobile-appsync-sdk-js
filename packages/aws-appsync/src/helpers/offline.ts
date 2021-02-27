@@ -3,20 +3,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { v4 as uuid } from 'uuid';
-import { cloneDeep } from 'apollo-utilities';
+import { cloneDeep } from '@apollo/client/utilities';
 import {
   ApolloClient,
   MutationOptions,
   SubscribeToMoreOptions,
   OperationVariables,
-} from 'apollo-client';
+} from '@apollo/client';
 import {
   DocumentNode,
   InputObjectTypeDefinitionNode,
   NamedTypeNode,
 } from 'graphql';
 import AWSAppSyncClient from '../client';
-import { replaceUsingMap } from '../link';
+// import { replaceUsingMap } from '../link';
 import { getOperationFieldName, rootLogger } from '../utils';
 
 const logger = rootLogger.extend('offline-helper');
@@ -470,7 +470,7 @@ const buildMutation = <T = OperationVariables>(
             (queryEntry && (queryEntry as QueryWithVariables).variables) || {};
 
           if (cache) {
-            queryVars = replaceUsingMap({ ...queryVars }, cache.getIdsMap());
+            // queryVars = replaceUsingMap({ ...queryVars }, cache.getIdsMap());
           }
 
           let data;

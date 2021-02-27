@@ -2,42 +2,42 @@
  * Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-import { ApolloLink, Observable, Operation, FetchResult } from "@apollo/client";
+import { ApolloLink, Observable, Operation, FetchResult } from '@apollo/client';
 
-import { rootLogger } from "./utils";
+import { rootLogger } from './utils';
 
 import {
   Signer,
   AuthOptions,
   AUTH_TYPE,
   USER_AGENT_HEADER,
-  USER_AGENT
-} from "aws-appsync-auth-link";
-import { GraphQLError, print } from "graphql";
-import * as url from "url";
-import { v4 as uuid } from "uuid";
+  USER_AGENT,
+} from 'aws-appsync-auth-link';
+import { GraphQLError, print } from 'graphql';
+import * as url from 'url';
+import { v4 as uuid } from 'uuid';
 import {
   UrlInfo,
   SOCKET_STATUS,
   ObserverQuery,
   SUBSCRIPTION_STATUS,
   MESSAGE_TYPES,
-  CONTROL_MSG
-} from "./types";
-import { jitteredExponentialRetry, NonRetryableError } from "./utils/retry";
+  CONTROL_MSG,
+} from './types';
+import { jitteredExponentialRetry, NonRetryableError } from './utils/retry';
 
-const logger = rootLogger.extend("subscriptions");
+const logger = rootLogger.extend('subscriptions');
 
-export const CONTROL_EVENTS_KEY = "@@controlEvents";
+export const CONTROL_EVENTS_KEY = '@@controlEvents';
 
 const NON_RETRYABLE_CODES = [400, 401, 403];
 
-const SERVICE = "appsync";
+const SERVICE = 'appsync';
 
 const APPSYNC_REALTIME_HEADERS = {
   accept: 'application/json, text/javascript',
   'content-encoding': 'amz-1.0',
-  'content-type': 'application/json; charset=UTF-8'
+  'content-type': 'application/json; charset=UTF-8',
 };
 
 /**
@@ -77,11 +77,11 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
     const { query, variables } = operation;
     const {
       controlMessages: { [CONTROL_EVENTS_KEY]: controlEvents } = {
-        [CONTROL_EVENTS_KEY]: undefined
+        [CONTROL_EVENTS_KEY]: undefined,
       },
-      headers
+      headers,
     } = operation.getContext();
-    return new Observable<FetchResult>(observer => {
+    return new Observable<FetchResult>((observer) => {
       if (!this.url) {
         observer.error({
           errors: [
@@ -101,22 +101,22 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
           authenticationType: this.auth.type,
           query: print(query),
           region: this.region,
-          graphql_headers: () => (headers),
+          graphql_headers: () => headers,
           variables,
-          apiKey: this.auth.type === AUTH_TYPE.API_KEY ? this.auth.apiKey : "",
+          apiKey: this.auth.type === AUTH_TYPE.API_KEY ? this.auth.apiKey : '',
           credentials:
             this.auth.type === AUTH_TYPE.AWS_IAM ? this.auth.credentials : null,
           jwtToken:
             this.auth.type === AUTH_TYPE.AMAZON_COGNITO_USER_POOLS ||
-              this.auth.type === AUTH_TYPE.OPENID_CONNECT
+            this.auth.type === AUTH_TYPE.OPENID_CONNECT
               ? this.auth.jwtToken
-              : null
+              : null,
         };
 
         this._startSubscriptionWithAWSAppSyncRealTime({
           options,
           observer,
-          subscriptionId
+          subscriptionId,
         });
 
         return async () => {
@@ -130,7 +130,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
               this._sendUnsubscriptionMessage(subscriptionId);
             } else {
               throw new Error(
-                "Subscription has failed, starting to remove subscription."
+                'Subscription has failed, starting to remove subscription.'
               );
             }
           } catch (err) {
@@ -139,9 +139,9 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
           }
         };
       }
-    }).filter(data => {
+    }).filter((data) => {
       const { extensions: { controlMsgType = undefined } = {} } = data;
-      const isControlMsg = typeof controlMsgType !== "undefined";
+      const isControlMsg = typeof controlMsgType !== 'undefined';
 
       return controlEvents === true || !isControlMsg;
     });
@@ -158,7 +158,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
           observer,
           subscriptionState,
           variables,
-          query
+          query,
         } = this.subscriptionObserverMap.get(subscriptionId);
         this.subscriptionObserverMap.set(subscriptionId, {
           observer,
@@ -166,7 +166,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
           variables,
           query,
           subscriptionReadyCallback: res,
-          subscriptionFailedCallback: rej
+          subscriptionFailedCallback: rej,
         });
       });
     }
@@ -182,7 +182,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
         // Preparing unsubscribe message to stop receiving messages for that subscription
         const unsubscribeMessage = {
           id: subscriptionId,
-          type: MESSAGE_TYPES.GQL_STOP
+          type: MESSAGE_TYPES.GQL_STOP,
         };
         const stringToAWSRealTime = JSON.stringify(unsubscribeMessage);
         this.awsRealTimeSocket.send(stringToAWSRealTime);
@@ -204,7 +204,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
   }
 
   private _closeSocketWhenFlushed() {
-    logger("closing WebSocket...");
+    logger('closing WebSocket...');
     clearTimeout(this.keepAliveTimeoutId);
     if (!this.awsRealTimeSocket) {
       this.socketStatus = SOCKET_STATUS.CLOSED;
@@ -223,7 +223,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
   private async _startSubscriptionWithAWSAppSyncRealTime({
     options,
     observer,
-    subscriptionId
+    subscriptionId,
   }) {
     const {
       appSyncGraphqlEndpoint,
@@ -234,12 +234,12 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
       region,
       graphql_headers = () => ({}),
       credentials,
-      jwtToken
+      jwtToken,
     } = options;
     const subscriptionState: SUBSCRIPTION_STATUS = SUBSCRIPTION_STATUS.PENDING;
     const data = {
       query,
-      variables
+      variables,
     };
     // Having a subscription id map will make it simple to forward messages received
     this.subscriptionObserverMap.set(subscriptionId, {
@@ -259,13 +259,13 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
         appSyncGraphqlEndpoint,
         authenticationType,
         payload: dataString,
-        canonicalUri: "",
+        canonicalUri: '',
         region,
         credentials,
-        jwtToken
+        jwtToken,
       })),
       ...(await graphql_headers()),
-      [USER_AGENT_HEADER]: USER_AGENT
+      [USER_AGENT_HEADER]: USER_AGENT,
     };
 
     const subscriptionMessage = {
@@ -274,11 +274,11 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
         data: dataString,
         extensions: {
           authorization: {
-            ...headerObj
-          }
-        }
+            ...headerObj,
+          },
+        },
       },
-      type: MESSAGE_TYPES.GQL_START
+      type: MESSAGE_TYPES.GQL_START,
     };
 
     const stringToAWSRealTime = JSON.stringify(subscriptionMessage);
@@ -290,16 +290,16 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
         authenticationType,
         region,
         credentials,
-        jwtToken
+        jwtToken,
       });
     } catch (err) {
-      const { message = "" } = err;
+      const { message = '' } = err;
       observer.error({
         errors: [
           {
-            ...new GraphQLError(`Connection failed: ${message}`)
-          }
-        ]
+            ...new GraphQLError(`Connection failed: ${message}`),
+          },
+        ],
       });
       observer.complete();
 
@@ -307,7 +307,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
         this.subscriptionObserverMap.get(subscriptionId) || {};
 
       // Notify concurrent unsubscription
-      if (typeof subscriptionFailedCallback === "function") {
+      if (typeof subscriptionFailedCallback === 'function') {
         subscriptionFailedCallback();
       }
       return;
@@ -319,7 +319,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
 
     const {
       subscriptionFailedCallback,
-      subscriptionReadyCallback
+      subscriptionReadyCallback,
     } = this.subscriptionObserverMap.get(subscriptionId);
 
     // This must be done before sending the message in order to be listening immediately
@@ -332,7 +332,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
       subscriptionFailedCallback,
       startAckTimeoutId: (setTimeout(() => {
         this._timeoutStartSubscriptionAck.call(this, subscriptionId);
-      }, START_ACK_TIMEOUT) as unknown) as number
+      }, START_ACK_TIMEOUT) as unknown) as number,
     });
 
     if (this.awsRealTimeSocket) {
@@ -346,7 +346,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
     apiKey,
     region,
     credentials,
-    jwtToken
+    jwtToken,
   }): Promise<void> {
     if (this.socketStatus === SOCKET_STATUS.READY) {
       return;
@@ -362,28 +362,28 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
             this.url
           );
 
-          const payloadString = "{}";
+          const payloadString = '{}';
           const headerString = JSON.stringify(
             await this._awsRealTimeHeaderBasedAuth({
               authenticationType,
               payload: payloadString,
-              canonicalUri: "/connect",
+              canonicalUri: '/connect',
               apiKey,
               appSyncGraphqlEndpoint,
               region,
               credentials,
-              jwtToken
+              jwtToken,
             })
           );
-          const headerQs = Buffer.from(headerString).toString("base64");
+          const headerQs = Buffer.from(headerString).toString('base64');
 
-          const payloadQs = Buffer.from(payloadString).toString("base64");
+          const payloadQs = Buffer.from(payloadString).toString('base64');
           const awsRealTimeUrl = `${discoverableEndpoint}?header=${headerQs}&payload=${payloadQs}`;
 
           await this._initializeRetryableHandshake({ awsRealTimeUrl });
 
           this.promiseArray.forEach(({ res }) => {
-            logger("Notifying connection successful");
+            logger('Notifying connection successful');
             res();
           });
           this.socketStatus = SOCKET_STATUS.READY;
@@ -412,7 +412,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
     apiKey,
     region,
     credentials,
-    jwtToken
+    jwtToken,
   }) {
     const headerHandler: Record<
       string,
@@ -421,12 +421,12 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
       API_KEY: this._awsRealTimeApiKeyHeader.bind(this),
       AWS_IAM: this._awsRealTimeIAMHeader.bind(this),
       OPENID_CONNECT: this._awsRealTimeOPENIDHeader.bind(this),
-      AMAZON_COGNITO_USER_POOLS: this._awsRealTimeOPENIDHeader.bind(this)
+      AMAZON_COGNITO_USER_POOLS: this._awsRealTimeOPENIDHeader.bind(this),
     };
 
     const handler = headerHandler[authenticationType];
 
-    if (typeof handler !== "function") {
+    if (typeof handler !== 'function') {
       logger(`Authentication type ${authenticationType} not supported`);
       return {};
     }
@@ -441,7 +441,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
       region,
       host,
       credentials,
-      jwtToken
+      jwtToken,
     });
 
     return result;
@@ -449,28 +449,28 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
 
   private async _awsRealTimeOPENIDHeader({
     host,
-    jwtToken
+    jwtToken,
   }): Promise<Record<string, string>> {
     return {
       Authorization:
-        typeof jwtToken === "function"
+        typeof jwtToken === 'function'
           ? await jwtToken.call(undefined)
           : await jwtToken,
-      host
+      host,
     };
   }
 
   private async _awsRealTimeApiKeyHeader({
     apiKey,
-    host
+    host,
   }): Promise<Record<string, string>> {
     const dt = new Date();
-    const dtStr = dt.toISOString().replace(/[:\-]|\.\d{3}/g, "");
+    const dtStr = dt.toISOString().replace(/[:\-]|\.\d{3}/g, '');
 
     return {
       host,
-      "x-amz-date": dtStr,
-      "x-api-key": apiKey
+      'x-amz-date': dtStr,
+      'x-api-key': apiKey,
     };
   }
 
@@ -479,38 +479,38 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
     canonicalUri,
     appSyncGraphqlEndpoint,
     region,
-    credentials
+    credentials,
   }): Promise<Record<string, string>> {
     const endpointInfo = {
       region,
-      service: SERVICE
+      service: SERVICE,
     };
 
     let creds =
-      typeof credentials === "function"
+      typeof credentials === 'function'
         ? credentials.call()
         : credentials || {};
 
-    if (creds && typeof creds.getPromise === "function") {
+    if (creds && typeof creds.getPromise === 'function') {
       await creds.getPromise();
     }
 
     if (!creds) {
-      throw new Error("No credentials");
+      throw new Error('No credentials');
     }
     const { accessKeyId, secretAccessKey, sessionToken } = await creds;
 
     const formattedCredentials = {
       access_key: accessKeyId,
       secret_key: secretAccessKey,
-      session_token: sessionToken
+      session_token: sessionToken,
     };
 
     const request = {
       url: `${appSyncGraphqlEndpoint}${canonicalUri}`,
       body: payload,
-      method: "POST",
-      headers: { ...APPSYNC_REALTIME_HEADERS }
+      method: 'POST',
+      headers: { ...APPSYNC_REALTIME_HEADERS },
     };
 
     const signed_params = Signer.sign(
@@ -524,7 +524,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
   private async _initializeRetryableHandshake({ awsRealTimeUrl }) {
     logger(`Initializaling retryable Handshake`);
     await jitteredExponentialRetry(this._initializeHandshake.bind(this), [
-      { awsRealTimeUrl }
+      { awsRealTimeUrl },
     ]);
   }
 
@@ -534,13 +534,16 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
     // Step 1: connect websocket
     try {
       await (() => {
-        return new Promise((res, rej) => {
-          const newSocket = AppSyncRealTimeSubscriptionHandshakeLink.createWebSocket(awsRealTimeUrl, "graphql-ws");
+        return new Promise<void>((res, rej) => {
+          const newSocket = AppSyncRealTimeSubscriptionHandshakeLink.createWebSocket(
+            awsRealTimeUrl,
+            'graphql-ws'
+          );
           newSocket.onerror = () => {
             logger(`WebSocket connection error`);
           };
           newSocket.onclose = () => {
-            rej(new Error("Connection handshake error"));
+            rej(new Error('Connection handshake error'));
           };
           newSocket.onopen = () => {
             this.awsRealTimeSocket = newSocket;
@@ -549,15 +552,14 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
         });
       })();
 
-
       // Step 2: wait for ack from AWS AppSyncReaTime after sending init
       await (() => {
         return new Promise((res, rej) => {
           let ackOk = false;
-          this.awsRealTimeSocket.onerror = error => {
+          this.awsRealTimeSocket.onerror = (error) => {
             logger(`WebSocket closed ${JSON.stringify(error)}`);
           };
-          this.awsRealTimeSocket.onclose = event => {
+          this.awsRealTimeSocket.onclose = (event) => {
             logger(`WebSocket closed ${event.reason}`);
             rej(new Error(JSON.stringify(event)));
           };
@@ -569,7 +571,9 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
             const data = JSON.parse(message.data);
             const {
               type,
-              payload: { connectionTimeoutMs = DEFAULT_KEEP_ALIVE_TIMEOUT } = {}
+              payload: {
+                connectionTimeoutMs = DEFAULT_KEEP_ALIVE_TIMEOUT,
+              } = {},
             } = data;
             if (type === MESSAGE_TYPES.GQL_CONNECTION_ACK) {
               ackOk = true;
@@ -578,25 +582,25 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
                 this
               );
 
-              this.awsRealTimeSocket.onerror = err => {
+              this.awsRealTimeSocket.onerror = (err) => {
                 logger(err);
                 this._errorDisconnect(CONTROL_MSG.CONNECTION_CLOSED);
               };
 
-              this.awsRealTimeSocket.onclose = event => {
+              this.awsRealTimeSocket.onclose = (event) => {
                 logger(`WebSocket closed ${event.reason}`);
                 this._errorDisconnect(CONTROL_MSG.CONNECTION_CLOSED);
               };
 
-              res("Cool, connected to AWS AppSyncRealTime");
+              res('Cool, connected to AWS AppSyncRealTime');
               return;
             }
 
             if (type === MESSAGE_TYPES.GQL_CONNECTION_ERROR) {
               const {
                 payload: {
-                  errors: [{ errorType = "", errorCode = 0 } = {}] = []
-                } = {}
+                  errors: [{ errorType = '', errorCode = 0 } = {}] = [],
+                } = {},
               } = data;
 
               rej({ errorType, errorCode });
@@ -604,7 +608,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
           };
 
           const gqlInit = {
-            type: MESSAGE_TYPES.GQL_CONNECTION_INIT
+            type: MESSAGE_TYPES.GQL_CONNECTION_INIT,
           };
           this.awsRealTimeSocket.send(JSON.stringify(gqlInit));
 
@@ -636,14 +640,14 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
 
   private _handleIncomingSubscriptionMessage(message: MessageEvent) {
     logger(`subscription message from AWS AppSync RealTime: ${message.data}`);
-    const { id = "", payload, type } = JSON.parse(message.data);
+    const { id = '', payload, type } = JSON.parse(message.data);
     const {
       observer = null,
-      query = "",
+      query = '',
       variables = {},
       startAckTimeoutId = 0,
       subscriptionReadyCallback = null,
-      subscriptionFailedCallback = null
+      subscriptionFailedCallback = null,
     } = this.subscriptionObserverMap.get(id) || {};
 
     logger({ id, observer, query, variables });
@@ -659,7 +663,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
 
     if (type === MESSAGE_TYPES.GQL_START_ACK) {
       logger(`subscription ready for ${JSON.stringify({ query, variables })}`);
-      if (typeof subscriptionReadyCallback === "function") {
+      if (typeof subscriptionReadyCallback === 'function') {
         subscriptionReadyCallback();
       }
       clearTimeout(startAckTimeoutId as number);
@@ -667,8 +671,8 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
         observer.next({
           data: payload,
           extensions: {
-            controlMsgType: "CONNECTED"
-          }
+            controlMsgType: 'CONNECTED',
+          },
         });
       } else {
         logger(`observer not found for id: ${id}`);
@@ -682,7 +686,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
         startAckTimeoutId: null,
         subscriptionState,
         subscriptionReadyCallback,
-        subscriptionFailedCallback
+        subscriptionFailedCallback,
       });
 
       return;
@@ -706,20 +710,22 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
         startAckTimeoutId,
         subscriptionReadyCallback,
         subscriptionFailedCallback,
-        subscriptionState
+        subscriptionState,
       });
 
       observer.error({
         errors: [
           {
-            ...new GraphQLError(`Connection failed: ${JSON.stringify(payload)}`)
-          }
-        ]
+            ...new GraphQLError(
+              `Connection failed: ${JSON.stringify(payload)}`
+            ),
+          },
+        ],
       });
       clearTimeout(startAckTimeoutId);
 
       observer.complete();
-      if (typeof subscriptionFailedCallback === "function") {
+      if (typeof subscriptionFailedCallback === 'function') {
         subscriptionFailedCallback();
       }
     }
@@ -754,7 +760,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
       observer,
       query,
       variables,
-      subscriptionState: SUBSCRIPTION_STATUS.FAILED
+      subscriptionState: SUBSCRIPTION_STATUS.FAILED,
     });
 
     if (observer && !observer.closed) {
@@ -763,14 +769,14 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
           {
             ...new GraphQLError(
               `Subscription timeout ${JSON.stringify({ query, variables })}`
-            )
-          }
-        ]
+            ),
+          },
+        ],
       });
       // Cleanup will be automatically executed
       observer.complete();
     }
-    logger("timeoutStartSubscription", JSON.stringify({ query, variables }));
+    logger('timeoutStartSubscription', JSON.stringify({ query, variables }));
   }
 
   static createWebSocket(awsRealTimeUrl: string, protocol: string): WebSocket {
@@ -779,9 +785,9 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
 
   private static _discoverAppSyncRealTimeEndpoint(url: string): string {
     return url
-      .replace("https://", "wss://")
+      .replace('https://', 'wss://')
       .replace('http://', 'ws://')
-      .replace("appsync-api", "appsync-realtime-api")
-      .replace("gogi-beta", "grt-beta");
+      .replace('appsync-api', 'appsync-realtime-api')
+      .replace('gogi-beta', 'grt-beta');
   }
 }

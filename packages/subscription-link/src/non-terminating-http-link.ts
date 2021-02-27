@@ -6,9 +6,9 @@ import { createHttpLink, HttpOptions } from '@apollo/client';
 import { NonTerminatingLink } from './non-terminating-link';
 
 export class NonTerminatingHttpLink extends NonTerminatingLink {
-    constructor(contextKey: string, options: HttpOptions) {
-        const link = createHttpLink(options);
+  constructor(contextKey: string, options: HttpOptions) {
+    const link = createHttpLink(options);
 
-        super(contextKey, { link });
-    }
+    super(contextKey, { link });
+  }
 }
