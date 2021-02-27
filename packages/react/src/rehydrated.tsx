@@ -2,11 +2,9 @@
  * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-import * as React from 'react';
-import * as PropTypes from 'prop-types';
-
+import React, { useEffect, useContext, useState, Context } from 'react';
 import AWSAppSyncClient from '@volkanunsal/aws-appsync';
-import { RehydratedState } from './index';
+import { getApolloContext, NormalizedCacheObject } from '@apollo/client';
 
 export interface RehydrateProps {
   rehydrated: boolean;
@@ -29,46 +27,28 @@ export interface RehydratedProps {
   loading?: React.ComponentType<any>;
 }
 
-export default class Rehydrated extends React.Component<
-  RehydratedProps,
-  RehydratedState
-> {
-  static contextTypes = {
-    client: PropTypes.instanceOf(AWSAppSyncClient).isRequired,
-  };
+export default function Rehydrated<T extends NormalizedCacheObject>({
+  render,
+  children,
+  loading,
+}: RehydratedProps) {
+  const {
+    client,
+  }: {
+    client?: AWSAppSyncClient<T>;
+  } = useContext(getApolloContext() as any);
 
-  static propTypes = {
-    render: PropTypes.func,
-    children: PropTypes.node,
-    loading: PropTypes.node,
-  };
+  const [rehydrated, setHydra] = useState(false);
 
-  constructor(props, context) {
-    super(props, context);
-
-    this.state = {
-      rehydrated: false,
-    };
-  }
-
-  async componentDidMount() {
-    await this.context.client.hydrated();
-
-    this.setState({
-      rehydrated: true,
+  useEffect(() => {
+    client.hydrated().then(() => {
+      setHydra(true);
     });
-  }
+  }, [client]);
 
-  render() {
-    const { render, children, loading } = this.props;
-    const { rehydrated } = this.state;
+  if (render) return render({ rehydrated });
+  if (!children) return null;
 
-    if (render) return render({ rehydrated });
-
-    if (children) {
-      if (loading) return rehydrated ? children : loading;
-
-      return <Rehydrate rehydrated={rehydrated}>{children}</Rehydrate>;
-    }
-  }
+  if (loading) return rehydrated ? children : loading;
+  return <Rehydrate rehydrated={rehydrated}>{children}</Rehydrate>;
 }

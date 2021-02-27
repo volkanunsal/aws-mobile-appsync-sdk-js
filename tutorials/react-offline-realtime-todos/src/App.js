@@ -4,7 +4,8 @@ import './App.css';
 
 import AWSAppSyncClient, { buildSubscription } from '@volkanunsal/aws-appsync';
 import { Rehydrated, graphqlMutation } from '@volkanunsal/aws-appsync-react';
-import { graphql, ApolloProvider, compose } from 'react-apollo';
+import { ApolloProvider } from '@apollo/client';
+import { graphql, compose } from '@apollo/client/utilities';
 
 import ListTodos from './GraphQLAllTodos';
 import NewTodo from './GraphQLNewTodo';

@@ -21,7 +21,7 @@ import { Observable } from '@apollo/client/utilities';
 import { createHttpLink } from '@apollo/client/link/http';
 import { Store } from 'redux';
 import { ComplexObjectLink } from './link';
-import { createStore, StoreOptions, DEFAULT_KEY_PREFIX } from './store';
+import { StoreOptions, DEFAULT_KEY_PREFIX } from './store';
 import {
   AuthOptions,
   AuthLink,
@@ -35,7 +35,6 @@ import ConflictResolutionLink from './link/conflict-resolution-link';
 import { createRetryLink } from './link/retry-link';
 import { ObservableSubscription } from '@apollo/client/utilities/observables/Observable';
 import { PERMANENT_ERROR_KEY } from './link/retry-link';
-
 import { defaultDataIdFromObject } from '@apollo/client/cache';
 export { defaultDataIdFromObject };
 
@@ -206,7 +205,6 @@ const keyPrefixesInUse = new Set<string>();
 class AWSAppSyncClient<
   TCacheShape extends NormalizedCacheObject
 > extends ApolloClient<TCacheShape> {
-  private _store: Store<OfflineCacheType>;
   private hydratedPromise: Promise<AWSAppSyncClient<TCacheShape>>;
 
   hydrated() {
@@ -224,12 +222,7 @@ class AWSAppSyncClient<
       complexObjectsCredentials,
       cacheOptions = {},
       disableOffline = false,
-      offlineConfig: {
-        storage = undefined,
-        keyPrefix = undefined,
-        callback = () => {},
-        storeCacheRootMutation = false,
-      } = {},
+      offlineConfig: { keyPrefix = undefined } = {},
     }: AWSAppSyncClientOptions,
     options?: Partial<ApolloClientOptions<NormalizedCacheObject>>
   ) {
@@ -248,23 +241,6 @@ class AWSAppSyncClient<
         `The keyPrefix ${keyPrefix} is already in use. Multiple clients cannot share the same keyPrefix. Provide a different keyPrefix in the offlineConfig object.`
       );
     }
-
-    let resolveClient;
-
-    const dataIdFromObject = () => null;
-
-    const store = disableOffline
-      ? null
-      : createStore({
-          clientGetter: () => this,
-          persistCallback: () => {
-            resolveClient(this);
-          },
-          dataIdFromObject,
-          storage,
-          keyPrefix,
-          callback,
-        });
 
     const inMemoryCache = new InMemoryCache(cacheOptions);
 
@@ -307,13 +283,8 @@ class AWSAppSyncClient<
 
     super(newOptions);
 
-    this.hydratedPromise = disableOffline
-      ? Promise.resolve(this)
-      : new Promise((resolve) => {
-          resolveClient = resolve;
-        });
+    this.hydratedPromise = Promise.resolve(this);
     this._disableOffline = disableOffline;
-    this._store = store;
 
     if (!disableOffline) {
       keyPrefixesInUse.add(keyPrefix);
