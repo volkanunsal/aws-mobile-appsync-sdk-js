@@ -33,7 +33,6 @@ import { DocumentNode } from 'graphql';
 import { passthroughLink } from './utils';
 import ConflictResolutionLink from './link/conflict-resolution-link';
 import { createRetryLink } from './link/retry-link';
-import { ObservableSubscription } from '@apollo/client/utilities/observables/Observable';
 import { PERMANENT_ERROR_KEY } from './link/retry-link';
 import { defaultDataIdFromObject } from '@apollo/client/cache';
 export { defaultDataIdFromObject };
@@ -318,8 +317,6 @@ class AWSAppSyncClient<
         optimisticResponse,
         update,
         fetchPolicy,
-        // updateQueries,
-        // refetchQueries,
       },
     };
 
@@ -330,24 +327,6 @@ class AWSAppSyncClient<
       fetchPolicy,
       ...otherOptions,
     });
-  }
-
-  sync<T, TVariables = OperationVariables>(
-    options: SubscribeWithSyncOptions<T, TVariables>
-  ): ObservableSubscription {
-    if (!this.isOfflineEnabled()) {
-      throw new Error('Not supported');
-    }
-
-    return new Observable<T>((observer) => {
-      let handle: ObservableSubscription;
-
-      return () => {
-        if (handle) {
-          handle.unsubscribe();
-        }
-      };
-    }).subscribe(() => {});
   }
 }
 
