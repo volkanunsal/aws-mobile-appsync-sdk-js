@@ -1,6 +1,6 @@
 {
   "name": "@volkanunsal/aws-appsync-auth-link",
-  "version": "3.0.9",
+  "version": "3.0.10",
   "main": "lib/index.js",
   "license": "Apache-2.0",
   "description": "AWS Mobile AppSync Auth Link for JavaScript",
@@ -23,10 +23,10 @@
     "test-watch": "jest --watch"
   },
   "dependencies": {
-    "debug": "2.6.9",
     "@aws-crypto/sha256-js": "^1.1.0",
     "@aws-sdk/types": "^3.6.1",
-    "@aws-sdk/util-hex-encoding": "^3.6.1"
+    "@aws-sdk/util-hex-encoding": "^3.6.1",
+    "debug": "2.6.9"
   },
   "devDependencies": {
     "@apollo/client": "^3.3.11"

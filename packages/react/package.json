@@ -1,6 +1,6 @@
 {
   "name": "@volkanunsal/aws-appsync-react",
-  "version": "4.0.11",
+  "version": "4.0.12",
   "main": "lib/index.js",
   "license": "Apache-2.0",
   "description": "AWS Mobile AppSync SDK for JavaScript - React and React Native components",
@@ -22,7 +22,7 @@
     "test": "jest --coverage --coverageReporters=text --passWithNoTests"
   },
   "dependencies": {
-    "@volkanunsal/aws-appsync": "^4.0.11",
+    "@volkanunsal/aws-appsync": "^4.0.12",
     "prop-types": "^15.6.0"
   },
   "peerDependencies": {
