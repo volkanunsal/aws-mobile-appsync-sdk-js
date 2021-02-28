@@ -28,7 +28,7 @@ import {
   AUTH_TYPE,
 } from '@volkanunsal/aws-appsync-auth-link';
 import { createSubscriptionHandshakeLink } from '@volkanunsal/aws-appsync-subscription-link';
-import { Credentials, CredentialsOptions } from 'aws-sdk/lib/credentials';
+import { Credentials, CredentialProvider } from '@aws-sdk/types';
 import { DocumentNode } from 'graphql';
 import { passthroughLink } from './utils';
 import ConflictResolutionLink from './link/conflict-resolution-link';
@@ -153,19 +153,7 @@ const createLinkWithStore = (
   });
 };
 
-type CredentialsGetter = () =>
-  | (
-      | Credentials
-      | CredentialsOptions
-      | Promise<Credentials>
-      | Promise<CredentialsOptions>
-      | null
-    )
-  | Credentials
-  | CredentialsOptions
-  | Promise<Credentials>
-  | Promise<CredentialsOptions>
-  | null;
+type CredentialsGetter = () => Credentials | CredentialProvider | null;
 
 export interface AWSAppSyncClientOptions {
   url: string;

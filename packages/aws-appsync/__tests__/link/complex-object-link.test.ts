@@ -5,11 +5,11 @@ import {
   complexObjectLink,
   ComplexObjectLink,
 } from '../../src/link/complex-object-link';
-import * as S3 from 'aws-sdk/clients/s3';
+import { S3 } from '@aws-sdk/client-s3';
 
-const uploadMock = jest.fn(() => ({ promise: () => Promise.resolve() }));
+const putObjectMock = jest.fn(() => ({ promise: () => Promise.resolve() }));
 
-(<any>S3.prototype).upload = uploadMock;
+(<any>S3.prototype).putObject = putObjectMock;
 
 const inspectionLink = jest.fn((operation, forward) => forward(operation));
 
@@ -53,7 +53,7 @@ test('Is ignored for queries', (done) => {
 
   execute(prepareLinkForTest(link), { query }).subscribe({
     next: () => {
-      expect(S3.prototype.upload).toHaveBeenCalledTimes(0);
+      expect(S3.prototype.putObject).toHaveBeenCalledTimes(0);
       done();
     },
     error: fail,
@@ -73,7 +73,7 @@ test('Is ignored for subscriptions', (done) => {
 
   execute(prepareLinkForTest(link), { query }).subscribe({
     next: () => {
-      expect(S3.prototype.upload).toHaveBeenCalledTimes(0);
+      expect(S3.prototype.putObject).toHaveBeenCalledTimes(0);
       done();
     },
     error: fail,
@@ -98,7 +98,7 @@ test('Is ignored for mutations with no S3Object', (done) => {
 
   execute(prepareLinkForTest(link), operation).subscribe({
     next: () => {
-      expect(S3.prototype.upload).toHaveBeenCalledTimes(0);
+      expect(S3.prototype.putObject).toHaveBeenCalledTimes(0);
       done();
     },
     error: fail,
@@ -129,7 +129,7 @@ test('Is run for mutations with a S3Object', (done) => {
 
   execute(prepareLinkForTest(link), operation).subscribe({
     next: () => {
-      expect(S3.prototype.upload).toHaveBeenCalled();
+      expect(S3.prototype.putObject).toHaveBeenCalled();
       done();
     },
     error: fail,
@@ -167,7 +167,7 @@ test('Is run for mutations with multiple S3Objects', (done) => {
 
   execute(prepareLinkForTest(link), operation).subscribe({
     next: () => {
-      expect(S3.prototype.upload).toHaveBeenCalledTimes(2);
+      expect(S3.prototype.putObject).toHaveBeenCalledTimes(2);
       done();
     },
     error: fail,
@@ -214,7 +214,7 @@ test('Is run for mutations with multiple S3Objects (array)', (done) => {
 
   execute(prepareLinkForTest(link), operation).subscribe({
     next: () => {
-      expect(S3.prototype.upload).toHaveBeenCalledTimes(3);
+      expect(S3.prototype.putObject).toHaveBeenCalledTimes(3);
       done();
     },
     error: fail,
@@ -248,7 +248,7 @@ test('https://github.com/awslabs/aws-mobile-appsync-sdk-js/issues/237', (done) =
 
   execute(prepareLinkForTest(link), operation).subscribe({
     next: () => {
-      expect(S3.prototype.upload).not.toHaveBeenCalled();
+      expect(S3.prototype.putObject).not.toHaveBeenCalled();
       done();
     },
     error: fail,
@@ -277,7 +277,7 @@ test('Calls observable.error on error', (done) => {
     },
   };
 
-  (S3.prototype.upload as jest.Mocked<any>).mockImplementationOnce(() => ({
+  (S3.prototype.putObject as jest.Mocked<any>).mockImplementationOnce(() => ({
     promise: () => {
       throw new Error('Some S3 error');
     },
@@ -289,7 +289,7 @@ test('Calls observable.error on error', (done) => {
       expect(err.message).toBe('GraphQL error: Some S3 error');
       expect(err.graphQLErrors.length).toBe(1);
       expect(err.graphQLErrors[0].errorType).toBe(
-        'AWSAppSyncClient:S3UploadException'
+        'AWSAppSyncClient:S3putObjectException'
       );
       expect(err).toBeInstanceOf(Error);
       done();
@@ -327,7 +327,7 @@ test('Is run for mutations with a nested S3Object', (done) => {
 
   execute(prepareLinkForTest(link), operation).subscribe({
     next: () => {
-      expect(S3.prototype.upload).toHaveBeenCalledWith({
+      expect(S3.prototype.putObject).toHaveBeenCalledWith({
         Bucket: 'bucket',
         Key: 'key',
         Body: {},
@@ -390,7 +390,7 @@ test('Removes localUri and mimeType from variables sent to api and keeps everyth
 
   execute(prepareLinkForTest(link), operation).subscribe({
     next: () => {
-      expect(S3.prototype.upload).toHaveBeenCalledWith({
+      expect(S3.prototype.putObject).toHaveBeenCalledWith({
         Bucket: 'bucket',
         Key: 'key',
         Body: {},

@@ -1,25 +1,82 @@
 /*
-Copyright 2017 - 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
-    http://aws.amazon.com/apache2.0/
-or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and limitations under the License.
-*/
-global.Buffer = global.Buffer || require('buffer').Buffer; // Required for aws sigv4 signing
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
 
-var url = require('url'),
-  crypto = require('aws-sdk/global').util.crypto;
+import { ConsoleLogger as Logger } from './Logger';
+import { Sha256 as jsSha256 } from '@aws-crypto/sha256-js';
+import { toHex } from '@aws-sdk/util-hex-encoding';
+import { parse, format } from 'url';
+import { DateUtils } from './Util/DateUtils';
 
-var encrypt = function (key, src, encoding = '') {
-  return crypto.lib
-    .createHmac('sha256', key)
-    .update(src, 'utf8')
-    .digest(encoding);
+const logger = new Logger('Signer');
+
+const DEFAULT_ALGORITHM = 'AWS4-HMAC-SHA256';
+const IOT_SERVICE_NAME = 'iotdevicegateway';
+
+const encrypt = function (key, src) {
+  const hash = new jsSha256(key);
+  hash.update(src);
+  return hash.digestSync();
 };
 
-var hash = function (src) {
-  src = src || '';
-  return crypto.createHash('sha256').update(src, 'utf8').digest('hex');
+const hash = function (src) {
+  const arg = src || '';
+  const hash = new jsSha256();
+  hash.update(arg);
+  return toHex(hash.digestSync());
+};
+
+/**
+ * @private
+ * RFC 3986 compliant version of encodeURIComponent
+ */
+const escape_RFC3986 = function (component) {
+  return component.replace(/[!'()*]/g, function (c) {
+    return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+  });
+};
+
+/**
+ * @private
+ * Create canonical query string
+ *
+ */
+const canonical_query = function (query) {
+  if (!query || query.length === 0) {
+    return '';
+  }
+
+  return query
+    .split('&')
+    .map((e) => {
+      const key_val = e.split('=');
+
+      if (key_val.length === 1) {
+        return e;
+      } else {
+        const reencoded_val = escape_RFC3986(key_val[1]);
+        return key_val[0] + '=' + reencoded_val;
+      }
+    })
+    .sort((a, b) => {
+      const key_a = a.split('=')[0];
+      const key_b = b.split('=')[0];
+      if (key_a === key_b) {
+        return a < b ? -1 : 1;
+      } else {
+        return key_a < key_b ? -1 : 1;
+      }
+    })
+    .join('&');
 };
 
 /**
@@ -33,7 +90,7 @@ CanonicalHeadersEntry =
     Lowercase(HeaderName) + ':' + Trimall(HeaderValue) + '\n'
 </pre>
 */
-var canonical_headers = function (headers) {
+const canonical_headers = function (headers) {
   if (!headers || Object.keys(headers).length === 0) {
     return '';
   }
@@ -60,7 +117,7 @@ var canonical_headers = function (headers) {
  * List of header keys included in the canonical headers.
  * @access private
  */
-var signed_headers = function (headers) {
+const signed_headers = function (headers) {
   return Object.keys(headers)
     .map(function (key) {
       return key.toLowerCase();
@@ -72,7 +129,8 @@ var signed_headers = function (headers) {
 /**
 * @private
 * Create canonical request
-* Refer to {@link http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html|Create a Canonical Request}
+* Refer to
+* {@link http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html|Create a Canonical Request}
 *
 <pre>
 CanonicalRequest =
@@ -84,25 +142,25 @@ CanonicalRequest =
     HexEncode(Hash(RequestPayload))
 </pre>
 */
-var canonical_request = function (request) {
-  var url_info = url.parse(request.url);
+const canonical_request = function (request) {
+  const url_info = parse(request.url);
 
   return [
     request.method || '/',
-    url_info.path,
-    url_info.query,
+    encodeURIComponent(url_info.pathname).replace(/%2F/gi, '/'),
+    canonical_query(url_info.query),
     canonical_headers(request.headers),
     signed_headers(request.headers),
-    hash(request.body),
+    hash(request.data),
   ].join('\n');
 };
 
-var parse_service_info = function (request) {
-  var url_info = url.parse(request.url),
+const parse_service_info = function (request) {
+  const url_info = parse(request.url),
     host = url_info.host;
 
-  var matched = host.match(/([^.]+)\.(?:([^.]*)\.)?amazonaws\.com$/),
-    parsed = (matched || []).slice(1, 3);
+  const matched = host.match(/([^\.]+)\.(?:([^\.]*)\.)?amazonaws\.com$/);
+  let parsed = (matched || []).slice(1, 3);
 
   if (parsed[1] === 'es') {
     // Elastic Search
@@ -115,14 +173,15 @@ var parse_service_info = function (request) {
   };
 };
 
-var credential_scope = function (d_str, region, service) {
+const credential_scope = function (d_str, region, service) {
   return [d_str, region, service, 'aws4_request'].join('/');
 };
 
 /**
 * @private
 * Create a string to sign
-* Refer to {@link http://docs.aws.amazon.com/general/latest/gr/sigv4-create-string-to-sign.html|Create String to Sign}
+* Refer to
+* {@link http://docs.aws.amazon.com/general/latest/gr/sigv4-create-string-to-sign.html|Create String to Sign}
 *
 <pre>
 StringToSign =
@@ -132,14 +191,15 @@ StringToSign =
     HashedCanonicalRequest
 </pre>
 */
-var string_to_sign = function (algorithm, canonical_request, dt_str, scope) {
+const string_to_sign = function (algorithm, canonical_request, dt_str, scope) {
   return [algorithm, dt_str, scope, hash(canonical_request)].join('\n');
 };
 
 /**
 * @private
 * Create signing key
-* Refer to {@link http://docs.aws.amazon.com/general/latest/gr/sigv4-calculate-signature.html|Calculate Signature}
+* Refer to
+* {@link http://docs.aws.amazon.com/general/latest/gr/sigv4-calculate-signature.html|Calculate Signature}
 *
 <pre>
 kSecret = your secret access key
@@ -149,8 +209,9 @@ kService = HMAC(kRegion, Service)
 kSigning = HMAC(kService, "aws4_request")
 </pre>
 */
-var get_signing_key = function (secret_key = '', d_str, service_info) {
-  var k = 'AWS4' + secret_key,
+const get_signing_key = function (secret_key, d_str, service_info) {
+  logger.debug(service_info);
+  const k = 'AWS4' + secret_key,
     k_date = encrypt(k, d_str),
     k_region = encrypt(k_date, service_info.region),
     k_service = encrypt(k_region, service_info.service),
@@ -159,18 +220,19 @@ var get_signing_key = function (secret_key = '', d_str, service_info) {
   return k_signing;
 };
 
-var get_signature = function (signing_key, str_to_sign) {
-  return encrypt(signing_key, str_to_sign, 'hex');
+const get_signature = function (signing_key, str_to_sign) {
+  return toHex(encrypt(signing_key, str_to_sign));
 };
 
 /**
  * @private
  * Create authorization header
- * Refer to {@link http://docs.aws.amazon.com/general/latest/gr/sigv4-add-signature-to-request.html|Add the Signing Information}
+ * Refer to
+ * {@link http://docs.aws.amazon.com/general/latest/gr/sigv4-add-signature-to-request.html|Add the Signing Information}
  */
-var get_authorization_header = function (
+const get_authorization_header = function (
   algorithm,
-  access_key = '',
+  access_key,
   scope,
   signed_headers,
   signature
@@ -182,100 +244,197 @@ var get_authorization_header = function (
   ].join(', ');
 };
 
-/**
-* Sign a HTTP request, add 'Authorization' header to request param
-* @method sign
-* @memberof Signer
-* @static
-*
-* @param {object} request - HTTP request object
-<pre>
-request: {
-    method: GET | POST | PUT ...
-    url: ...,
-    headers: {
-        header1: ...
-    },
-    body: data
-}
-</pre>
-* @param {object} access_info - AWS access credential info
-<pre>
-access_info: {
-    access_key: ...,
-    secret_key: ...,
-    session_token: ...
-}
-</pre>
-* @param {object} [service_info] - AWS service type and region, optional,
-*                                  if not provided then parse out from url
-<pre>
-service_info: {
-    service: ...,
-    region: ...
-}
-</pre>
-*
-* @returns {object} Signed HTTP request
-*/
-var sign = function (request, access_info, service_info = null) {
-  request.headers = request.headers || {};
+export class Signer {
+  /**
+    * Sign a HTTP request, add 'Authorization' header to request param
+    * @method sign
+    * @memberof Signer
+    * @static
+    *
+    * @param {object} request - HTTP request object
+    <pre>
+    request: {
+        method: GET | POST | PUT ...
+        url: ...,
+        headers: {
+            header1: ...
+        },
+        data: data
+    }
+    </pre>
+    * @param {object} access_info - AWS access credential info
+    <pre>
+    access_info: {
+        access_key: ...,
+        secret_key: ...,
+        session_token: ...
+    }
+    </pre>
+    * @param {object} [service_info] - AWS service type and region, optional,
+    *                                  if not provided then parse out from url
+    <pre>
+    service_info: {
+        service: ...,
+        region: ...
+    }
+    </pre>
+    *
+    * @returns {object} Signed HTTP request
+    */
+  static sign(request, access_info, service_info = null) {
+    request.headers = request.headers || {};
 
-  // datetime string and date string
-  var dt = new Date(),
-    dt_str = dt.toISOString().replace(/[:-]|\.\d{3}/g, ''),
-    d_str = dt_str.substr(0, 8),
-    algorithm = 'AWS4-HMAC-SHA256';
+    // datetime string and date string
+    const dt = DateUtils.getDateWithClockOffset(),
+      dt_str = dt.toISOString().replace(/[:\-]|\.\d{3}/g, ''),
+      d_str = dt_str.substr(0, 8);
 
-  var url_info = url.parse(request.url);
-  request.headers['host'] = url_info.host;
-  request.headers['x-amz-date'] = dt_str;
-  if (access_info.session_token) {
-    request.headers['X-Amz-Security-Token'] = access_info.session_token;
+    const url_info = parse(request.url);
+    request.headers['host'] = url_info.host;
+    request.headers['x-amz-date'] = dt_str;
+    if (access_info.session_token) {
+      request.headers['X-Amz-Security-Token'] = access_info.session_token;
+    }
+
+    // Task 1: Create a Canonical Request
+    const request_str = canonical_request(request);
+    logger.debug(request_str);
+
+    // Task 2: Create a String to Sign
+    const serviceInfo = service_info || parse_service_info(request),
+      scope = credential_scope(d_str, serviceInfo.region, serviceInfo.service),
+      str_to_sign = string_to_sign(
+        DEFAULT_ALGORITHM,
+        request_str,
+        dt_str,
+        scope
+      );
+
+    // Task 3: Calculate the Signature
+    const signing_key = get_signing_key(
+        access_info.secret_key,
+        d_str,
+        serviceInfo
+      ),
+      signature = get_signature(signing_key, str_to_sign);
+
+    // Task 4: Adding the Signing information to the Request
+    const authorization_header = get_authorization_header(
+      DEFAULT_ALGORITHM,
+      access_info.access_key,
+      scope,
+      signed_headers(request.headers),
+      signature
+    );
+    request.headers['Authorization'] = authorization_header;
+
+    return request;
   }
 
-  // Task 1: Create a Canonical Request
-  var request_str = canonical_request(request);
+  static signUrl(
+    urlToSign: string,
+    accessInfo: any,
+    serviceInfo?: any,
+    expiration?: number
+  ): string;
+  static signUrl(
+    request: any,
+    accessInfo: any,
+    serviceInfo?: any,
+    expiration?: number
+  ): string;
+  static signUrl(
+    urlOrRequest: string | any,
+    accessInfo: any,
+    serviceInfo?: any,
+    expiration?: number
+  ): string {
+    const urlToSign: string =
+      typeof urlOrRequest === 'object' ? urlOrRequest.url : urlOrRequest;
+    const method: string =
+      typeof urlOrRequest === 'object' ? urlOrRequest.method : 'GET';
+    const body: any =
+      typeof urlOrRequest === 'object' ? urlOrRequest.body : undefined;
 
-  // Task 2: Create a String to Sign
-  service_info = service_info || parse_service_info(request);
-  var scope = credential_scope(
-    d_str,
-    service_info.region,
-    service_info.service
-  );
-  var str_to_sign = string_to_sign(algorithm, request_str, dt_str, scope);
+    const now = DateUtils.getDateWithClockOffset()
+      .toISOString()
+      .replace(/[:\-]|\.\d{3}/g, '');
+    const today = now.substr(0, 8);
+    // Intentionally discarding search
+    const { search, ...parsedUrl } = parse(urlToSign, true, true);
+    const { host } = parsedUrl;
+    const signedHeaders = { host };
 
-  // Task 3: Calculate the Signature
-  var signing_key = get_signing_key(
-      access_info.secret_key,
-      d_str,
-      service_info
-    ),
-    signature = get_signature(signing_key, str_to_sign);
+    const { region, service } =
+      serviceInfo || parse_service_info({ url: format(parsedUrl) });
+    const credentialScope = credential_scope(today, region, service);
 
-  // Task 4: Adding the Signing information to the Request
-  var authorization_header = get_authorization_header(
-    algorithm,
-    access_info.access_key,
-    scope,
-    signed_headers(request.headers),
-    signature
-  );
-  request.headers['Authorization'] = authorization_header;
+    // IoT service does not allow the session token in the canonical request
+    // https://docs.aws.amazon.com/general/latest/gr/sigv4-add-signature-to-request.html
+    const sessionTokenRequired =
+      accessInfo.session_token && service !== IOT_SERVICE_NAME;
+    const queryParams = {
+      'X-Amz-Algorithm': DEFAULT_ALGORITHM,
+      'X-Amz-Credential': [accessInfo.access_key, credentialScope].join('/'),
+      'X-Amz-Date': now.substr(0, 16),
+      ...(sessionTokenRequired
+        ? { 'X-Amz-Security-Token': `${accessInfo.session_token}` }
+        : {}),
+      ...(expiration ? { 'X-Amz-Expires': `${expiration}` } : {}),
+      'X-Amz-SignedHeaders': Object.keys(signedHeaders).join(','),
+    };
 
-  return request;
-};
+    const canonicalRequest = canonical_request({
+      method,
+      url: format({
+        ...parsedUrl,
+        query: {
+          ...parsedUrl.query,
+          ...queryParams,
+        },
+      }),
+      headers: signedHeaders,
+      data: body,
+    });
 
-/**
- * AWS request signer.
- * Refer to {@link http://docs.aws.amazon.com/general/latest/gr/sigv4_signing.html|Signature Version 4}
- *
- * @class Signer
- */
-class Signer {
-  static sign = sign;
+    const stringToSign = string_to_sign(
+      DEFAULT_ALGORITHM,
+      canonicalRequest,
+      now,
+      credentialScope
+    );
+
+    const signing_key = get_signing_key(accessInfo.secret_key, today, {
+      region,
+      service,
+    });
+    const signature = get_signature(signing_key, stringToSign);
+
+    const additionalQueryParams = {
+      'X-Amz-Signature': signature,
+      ...(accessInfo.session_token && {
+        'X-Amz-Security-Token': accessInfo.session_token,
+      }),
+    };
+
+    const result = format({
+      protocol: parsedUrl.protocol,
+      slashes: true,
+      hostname: parsedUrl.hostname,
+      port: parsedUrl.port,
+      pathname: parsedUrl.pathname,
+      query: {
+        ...parsedUrl.query,
+        ...queryParams,
+        ...additionalQueryParams,
+      },
+    });
+
+    return result;
+  }
 }
 
+/**
+ * @deprecated use per-function import
+ */
 export default Signer;
-export { Signer };

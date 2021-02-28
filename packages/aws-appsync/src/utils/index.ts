@@ -33,8 +33,6 @@ export function tryFunctionOrLogError(f: () => void) {
   }
 }
 
-const crypto = require('aws-sdk/global').util.crypto;
-
 export const passthroughLink = (op, forward) =>
   forward ? forward(op) : Observable.of();
 
@@ -47,11 +45,5 @@ export const getOperationFieldName = (operation: DocumentNode): string =>
     (operation.definitions[0] as OperationDefinitionNode).selectionSet
       .selections[0] as FieldNode
   );
-
-export const hash = (src: any) =>
-  crypto
-    .createHash('sha256')
-    .update(src || {}, 'utf8')
-    .digest('hex') as string;
 
 export { default as rootLogger } from './logger';

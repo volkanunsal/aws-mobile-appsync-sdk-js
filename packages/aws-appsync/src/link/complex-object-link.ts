@@ -96,7 +96,18 @@ const complexObjectFields = [
   { name: 'mimeType', type: 'string' },
   { name: 'localUri', type: ['object', 'string'] },
 ];
-const findInObject = (obj) => {
+const findInObject = (
+  obj
+): Record<
+  string,
+  {
+    bucket: string;
+    key: string;
+    region: string;
+    mimeType: string;
+    localUri: string;
+  }
+> => {
   const testFn = (val) => {
     return complexObjectFields.every((field) => {
       const hasValue = val[field.name];
