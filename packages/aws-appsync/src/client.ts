@@ -20,7 +20,6 @@ import { ApolloLink, NextLink } from '@apollo/client/link/core';
 import { Observable } from '@apollo/client/utilities';
 import { createHttpLink } from '@apollo/client/link/http';
 import { Store } from 'redux';
-import { ComplexObjectLink } from './link';
 import { StoreOptions, DEFAULT_KEY_PREFIX } from './store';
 import {
   AuthOptions,
@@ -104,7 +103,6 @@ export const createAppSyncLink = ({
   const link = ApolloLink.from(
     [
       new ConflictResolutionLink(conflictResolver) as ApolloLink,
-      new ComplexObjectLink(complexObjectsCredentials),
       createRetryLink(
         ApolloLink.from([
           new CatchErrorLink(() => new AuthLink({ url, region, auth })),
