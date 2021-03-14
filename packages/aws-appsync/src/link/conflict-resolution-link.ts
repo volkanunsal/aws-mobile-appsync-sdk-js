@@ -7,7 +7,18 @@ import { Observable } from '@apollo/client/utilities';
 import { RetryLink } from '@apollo/client/link/retry';
 import { getOperationFieldName, passthroughLink } from '../utils';
 import { AWSAppsyncGraphQLError } from '../types';
-import { ConflictResolver } from '../client';
+import { DocumentNode } from 'graphql';
+
+export interface ConflictResolutionInfo {
+  mutation: DocumentNode;
+  mutationName: string;
+  operationType: string;
+  variables: any;
+  data: any;
+  retries: number;
+}
+
+export type ConflictResolver = (obj: ConflictResolutionInfo) => 'DISCARD' | any;
 
 export default class ConflictResolutionLink extends ApolloLink {
   private conflictResolver: ConflictResolver;
