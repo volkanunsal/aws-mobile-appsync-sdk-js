@@ -1,21 +1,15 @@
-/*!
- * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
 import { ApolloLink, Observable } from '@apollo/client';
 import { print } from 'graphql/language/printer';
-
-import { Signer } from './signer';
+import { Signer } from '@aws-amplify/core';
 import * as Url from 'url';
 
 import { userAgent } from './platform';
 import { Credentials, CredentialProvider } from '@aws-sdk/types';
 
-const packageInfo = require('../package.json');
-
+const VERSION = '1.0.0';
 const SERVICE = 'appsync';
 export const USER_AGENT_HEADER = 'x-amz-user-agent';
-export const USER_AGENT = `aws-amplify/${packageInfo.version}${
+export const USER_AGENT = `aws-amplify/${VERSION}${
   userAgent && ' '
 }${userAgent}`;
 

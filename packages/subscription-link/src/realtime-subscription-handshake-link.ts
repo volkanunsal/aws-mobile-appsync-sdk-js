@@ -3,11 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { ApolloLink, Observable, Operation, FetchResult } from '@apollo/client';
-
 import { rootLogger } from './utils';
-
+import { Signer } from '@aws-amplify/core';
 import {
-  Signer,
   AuthOptions,
   AUTH_TYPE,
   USER_AGENT_HEADER,
