@@ -1,6 +1,6 @@
 {
   "name": "@volkanunsal/aws-appsync",
-  "version": "4.0.18",
+  "version": "4.0.19",
   "main": "lib/index.js",
   "license": "Apache-2.0",
   "description": "AWS Mobile AppSync SDK for JavaScript",
@@ -24,8 +24,8 @@
   },
   "dependencies": {
     "@apollo/client": "^3.3.11",
-    "@volkanunsal/aws-appsync-auth-link": "^3.0.13",
-    "@volkanunsal/aws-appsync-subscription-link": "^3.0.15",
+    "@volkanunsal/aws-appsync-auth-link": "^3.0.14",
+    "@volkanunsal/aws-appsync-subscription-link": "^3.0.16",
     "debug": "2.6.9",
     "graphql": "^15.0.0",
     "uuid": "3.x"
