@@ -12,7 +12,6 @@ import {
   USER_AGENT,
 } from '@volkanunsal/aws-appsync-auth-link';
 import { GraphQLError, print } from 'graphql';
-import * as url from 'url';
 import { v4 as uuid } from 'uuid';
 import {
   UrlInfo,
@@ -429,7 +428,7 @@ export class AppSyncRealTimeSubscriptionHandshakeLink extends ApolloLink {
       return {};
     }
 
-    const { host } = url.parse(appSyncGraphqlEndpoint);
+    const { host } = new URL(appSyncGraphqlEndpoint);
 
     const result = await handler({
       payload,

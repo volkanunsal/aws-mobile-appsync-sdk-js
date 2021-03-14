@@ -1,7 +1,6 @@
-import { ApolloLink, Observable } from '@apollo/client';
+import { ApolloLink, NextLink, Observable, Operation } from '@apollo/client';
 import { print } from 'graphql/language/printer';
 import { Signer } from '@aws-amplify/core';
-import * as Url from 'url';
 
 import { userAgent } from './platform';
 import { Credentials, CredentialProvider } from '@aws-sdk/types';
@@ -74,33 +73,46 @@ const headerBasedAuth = async (
 };
 
 const iamBasedAuth = async (
-  { credentials, region, url },
-  operation,
-  forward
+  {
+    credentials,
+    region,
+    url,
+  }: {
+    credentials: (() => Record<string, any>) | Record<string, any>;
+    region: string;
+    url: string;
+  },
+  operation: Operation,
+  forward: NextLink
 ) => {
   const service = SERVICE;
   const origContext = operation.getContext();
 
-  credentials =
-    typeof credentials === 'function' ? credentials.call() : credentials || {};
+  const { accessKeyId, secretAccessKey, sessionToken } =
+    typeof credentials === 'function' ? credentials() : credentials || {};
 
-  if (credentials && typeof credentials.getPromise === 'function') {
-    await credentials.getPromise();
-  }
+  const { host, pathname } = new URL(url);
+  const { operationName, query, variables } = operation;
 
-  const { accessKeyId, secretAccessKey, sessionToken } = await credentials;
-
-  const { host, path } = Url.parse(url);
+  const body = {
+    operationName,
+    variables: removeTemporaryVariables(variables),
+    query: print(query),
+  };
 
   const formatted = {
-    ...origContext.headers,
-    [USER_AGENT_HEADER]: USER_AGENT,
-    ...formatAsRequest(operation, {}),
+    body: JSON.stringify(body),
+    method: 'POST',
+    headers: {
+      ...origContext.headers,
+      'content-type': 'application/json; charset=UTF-8',
+      [USER_AGENT_HEADER]: USER_AGENT,
+    },
     service,
     region,
     url,
     host,
-    path,
+    path: pathname,
   };
 
   const creds = {
@@ -212,25 +224,6 @@ export const authLink = ({
       };
     });
   });
-};
-
-const formatAsRequest = ({ operationName, variables, query }, options) => {
-  const body = {
-    operationName,
-    variables: removeTemporaryVariables(variables),
-    query: print(query),
-  };
-
-  return {
-    body: JSON.stringify(body),
-    method: 'POST',
-    ...options,
-    headers: {
-      accept: '*/*',
-      'content-type': 'application/json; charset=UTF-8',
-      ...options.headers,
-    },
-  };
 };
 
 /**
