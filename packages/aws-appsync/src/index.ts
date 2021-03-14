@@ -15,7 +15,7 @@ import {
 import { ApolloLink, NextLink } from '@apollo/client/link/core';
 import { Observable } from '@apollo/client/utilities';
 import { createHttpLink } from '@apollo/client/link/http';
-import { StoreOptions, DEFAULT_KEY_PREFIX } from './store';
+import { KEY_PREFIX as DEFAULT_KEY_PREFIX } from 'redux-persist';
 import {
   AuthOptions,
   AuthLink,
@@ -121,15 +121,7 @@ export interface AWSAppSyncClientOptions {
   complexObjectsCredentials?: CredentialsGetter;
   cacheOptions?: ApolloReducerConfig;
   disableOffline?: boolean;
-  offlineConfig?: OfflineConfig;
 }
-
-export type OfflineConfig = Pick<
-  Partial<StoreOptions<any>>,
-  'storage' | 'callback' | 'keyPrefix'
-> & {
-  storeCacheRootMutation?: boolean;
-};
 
 // TODO: type defs
 export type OfflineCallback = (err: any, success: any) => void;
@@ -155,7 +147,6 @@ class AWSAppSyncClient<
       complexObjectsCredentials,
       cacheOptions = {},
       disableOffline = false,
-      offlineConfig: { keyPrefix = undefined } = {},
     }: AWSAppSyncClientOptions,
     options?: Partial<ApolloClientOptions<NormalizedCacheObject>>
   ) {
@@ -168,10 +159,10 @@ class AWSAppSyncClient<
       );
     }
 
-    keyPrefix = keyPrefix || DEFAULT_KEY_PREFIX;
+    let keyPrefix = DEFAULT_KEY_PREFIX;
     if (!disableOffline && keyPrefixesInUse.has(keyPrefix)) {
       throw new Error(
-        `The keyPrefix ${keyPrefix} is already in use. Multiple clients cannot share the same keyPrefix. Provide a different keyPrefix in the offlineConfig object.`
+        `The keyPrefix ${keyPrefix} is already in use. Multiple clients cannot share the same keyPrefix.`
       );
     }
 
