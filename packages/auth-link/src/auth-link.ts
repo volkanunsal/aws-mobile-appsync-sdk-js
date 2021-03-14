@@ -81,14 +81,14 @@ const iamBasedAuth = async (
   const service = SERVICE;
   const origContext = operation.getContext();
 
-  let creds =
+  credentials =
     typeof credentials === 'function' ? credentials.call() : credentials || {};
 
-  if (creds && typeof creds.getPromise === 'function') {
-    await creds.getPromise();
+  if (credentials && typeof credentials.getPromise === 'function') {
+    await credentials.getPromise();
   }
 
-  const { accessKeyId, secretAccessKey, sessionToken } = await creds;
+  const { accessKeyId, secretAccessKey, sessionToken } = await credentials;
 
   const { host, path } = Url.parse(url);
 
@@ -103,12 +103,15 @@ const iamBasedAuth = async (
     path,
   };
 
-  const { headers } = Signer.sign(formatted, {
-    access_key: accessKeyId,
+  const creds = {
     secret_key: secretAccessKey,
+    access_key: accessKeyId,
     session_token: sessionToken,
-  });
-
+  };
+  const endpointInfo = { region, service };
+  const signerServiceInfo = endpointInfo;
+  const signed_params = Signer.sign(formatted, creds, signerServiceInfo);
+  const { headers } = signed_params;
   delete headers['host'];
 
   operation.setContext({
