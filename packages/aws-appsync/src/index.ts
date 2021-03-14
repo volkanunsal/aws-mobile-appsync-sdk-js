@@ -15,7 +15,6 @@ import {
 import { ApolloLink, NextLink } from '@apollo/client/link/core';
 import { Observable } from '@apollo/client/utilities';
 import { createHttpLink } from '@apollo/client/link/http';
-import { KEY_PREFIX as DEFAULT_KEY_PREFIX } from 'redux-persist';
 import {
   AuthOptions,
   AuthLink,
@@ -28,6 +27,8 @@ import { passthroughLink } from './utils';
 import { createRetryLink } from './link/retry-link';
 import { PERMANENT_ERROR_KEY } from './link/retry-link';
 import { createAuthLink } from '@volkanunsal/aws-appsync-auth-link';
+
+const KEY_PREFIX = 'persist:';
 
 class CatchErrorLink extends ApolloLink {
   private link: ApolloLink;
@@ -159,7 +160,7 @@ class AWSAppSyncClient<
       );
     }
 
-    let keyPrefix = DEFAULT_KEY_PREFIX;
+    let keyPrefix = KEY_PREFIX;
     if (!disableOffline && keyPrefixesInUse.has(keyPrefix)) {
       throw new Error(
         `The keyPrefix ${keyPrefix} is already in use. Multiple clients cannot share the same keyPrefix.`
