@@ -78,7 +78,9 @@ const iamBasedAuth = async (
     region,
     url,
   }: {
-    credentials: (() => Record<string, any>) | Record<string, any>;
+    credentials:
+      | (() => { getPromise: () => Promise<Record<string, any>> })
+      | Record<string, any>;
     region: string;
     url: string;
   },
@@ -88,10 +90,23 @@ const iamBasedAuth = async (
   const service = SERVICE;
   const origContext = operation.getContext();
 
-  const { accessKeyId, secretAccessKey, sessionToken } =
-    typeof credentials === 'function' ? credentials() : credentials || {};
+  const credentials2 =
+    typeof credentials === 'function'
+      ? credentials.call(null)
+      : credentials || {};
 
-  const { host, pathname } = new URL(url);
+  if (
+    credentials2 &&
+    typeof credentials2 !== 'function' &&
+    typeof credentials2.getPromise === 'function'
+  ) {
+    await credentials2.getPromise();
+  }
+
+  const { accessKeyId, secretAccessKey, sessionToken } = await credentials2;
+
+  const { host, pathname: path } = new URL(url);
+
   const { operationName, query, variables } = operation;
 
   const body = {
@@ -112,7 +127,7 @@ const iamBasedAuth = async (
     region,
     url,
     host,
-    path: pathname,
+    path,
   };
 
   const creds = {
