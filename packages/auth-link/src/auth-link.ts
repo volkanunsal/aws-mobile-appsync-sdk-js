@@ -93,6 +93,8 @@ const iamBasedAuth = async (
   const { host, path } = Url.parse(url);
 
   const formatted = {
+    ...origContext.headers,
+    [USER_AGENT_HEADER]: USER_AGENT,
     ...formatAsRequest(operation, {}),
     service,
     region,
@@ -107,13 +109,11 @@ const iamBasedAuth = async (
     session_token: sessionToken,
   });
 
+  delete headers['host'];
+
   operation.setContext({
     ...origContext,
-    headers: {
-      ...origContext.headers,
-      ...headers,
-      [USER_AGENT_HEADER]: USER_AGENT,
-    },
+    headers,
   });
 
   return forward(operation);
